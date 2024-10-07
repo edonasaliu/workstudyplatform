@@ -1,0 +1,19 @@
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+.wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1;
+}
+.footer-logo {
+  width: 300px; /* Adjust as necessary */
+  height: auto; /* Maintain aspect ratio */
+  margin-bottom: 10px; /* Space below the logo */
+}
