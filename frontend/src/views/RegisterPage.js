@@ -16,7 +16,8 @@ const RegisterPage = () => {
         confirmPassword: '',
         userType: 'student',
         studentId: '',
-        employmentId: ''
+        employmentId: '',
+        adminId: ''
     });
     const [emailError, setEmailError] = useState('');
     const [passwordError, setPasswordError] = useState('');
@@ -34,6 +35,9 @@ const RegisterPage = () => {
             return false;
         } else if (userDetails.userType === 'manager' && !userDetails.email.endsWith('@minerva.edu')) {
             setEmailError('Managers must use a minerva.edu email');
+            return false;
+        } else if (userDetails.userType === 'admin' && !userDetails.email.endsWith('@minerva.edu')) {
+            setEmailError('Admins must use a minerva.edu email and be work-study administrators');
             return false;
         }
         setEmailError('');
@@ -54,7 +58,7 @@ const RegisterPage = () => {
 
     async function handleSubmit(e) {
         e.preventDefault();
-        setIsLoading(true)
+        setIsLoading(true);
 
         if (validateEmail() && validatePasswords()) {
             try {
@@ -132,6 +136,7 @@ const RegisterPage = () => {
                         className="form-select">
                         <option value="student">Student</option>
                         <option value="manager">Manager</option>
+                        <option value="admin">Admin (Work-Study)</option>
                     </select>
                 </div>
                 {userDetails.userType === 'student' && (
@@ -153,6 +158,18 @@ const RegisterPage = () => {
                             name="employmentId"
                             placeholder="Employment ID"
                             value={userDetails.employmentId}
+                            onChange={handleChange}
+                            className="form-control"
+                        />
+                    </div>
+                )}
+                {userDetails.userType === 'admin' && (
+                    <div className="mb-3">
+                        <input
+                            type="text"
+                            name="adminId"
+                            placeholder="Admin ID"
+                            value={userDetails.adminId}
                             onChange={handleChange}
                             className="form-control"
                         />

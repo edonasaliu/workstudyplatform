@@ -8,22 +8,25 @@ const LoginPage = () => {
     const { user, login } = useContext(UserContext); // Using UserContext for login logic
     const [email, setEmail] = useState(''); // State for email
     const [password, setPassword] = useState(''); // State for password
-    const [isLoading, setIsLoading] = useState(false)
+    const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
+
     useEffect(() => {
         if (user && user.role === 'student') {
             navigate('/Dashboard');
-        }
-        if (user && user.role === 'manager') {
+        } else if (user && user.role === 'manager') {
             navigate('/employer-dashboard');
+        } else if (user && user.role === 'admin') {
+            navigate('/admin-dashboard'); // Redirect to admin dashboard for work-study admins
         }
     }, [user, navigate]);
+
     // Handler for form submission
     const handleSubmit = async (e) => {
         e.preventDefault(); // Prevents the default form submission behavior
-        setIsLoading(true)
+        setIsLoading(true);
         await login({email, password}); // Calls login function from UserContext with email and password
-        setIsLoading(false)
+        setIsLoading(false);
     };
 
     return (
@@ -47,7 +50,9 @@ const LoginPage = () => {
                         onChange={(e) => setPassword(e.target.value)} 
                     />
                 </FormGroup>
-                <Button type="submit" style={{ backgroundColor: '#f45d26', borderColor: '#f45d26' }} className="mb-3 w-100">{isLoading ? 'Submitting...' : 'Sign In'}</Button>
+                <Button type="submit" style={{ backgroundColor: '#f45d26', borderColor: '#f45d26' }} className="mb-3 w-100">
+                    {isLoading ? 'Submitting...' : 'Sign In'}
+                </Button>
                 <div className="text-center">
                     Don't have an account? <Link to="/register" style={{ color: '#f45d26' }}>Register</Link>
                 </div>
