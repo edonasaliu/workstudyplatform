@@ -9,6 +9,10 @@ export function defineAbilityFor(user) {
   if (user.role === 'manager') {
     can('read', 'employer-dashboard');
   }
+  if (user.role === 'admin') {
+    can('read', 'admin-dashboard'); 
+    can('manage', 'all'); 
+  }
 
   return build();
 }

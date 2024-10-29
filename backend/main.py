@@ -386,3 +386,38 @@ def search_jobs():
 
 
 
+@main.route("/")
+def home():
+    return jsonify({"message": "Welcome to the Work Study Platform API"}), 200
+
+@main.route('/admin/jobs', methods=['GET'])
+@login_required
+def admin_view_all_jobs():
+    if current_user.role != 'admin':
+        return jsonify({"message": "Unauthorized"}), 403
+
+    jobs = Job.query.all()
+    jobs_data = []
+    for job in jobs:
+        job_data = job.to_dict()
+        job_data['manager'] = {
+            "id": job.employer.id,
+            "name": f"{job.employer.first_name} {job.employer.last_name}",
+            "email": job.employer.email,
+        }
+        applications = Application.query.filter_by(job_id=job.id).all()
+        job_data['applications'] = [
+            {
+                "id": application.id,
+                "student_name": f"{application.student.first_name} {application.student.last_name}",
+                "email_address": application.email_address,
+                "year_of_graduation": application.year_of_graduation,
+                "candidate_statement": application.candidate_statement,
+                "status": application.status,
+            }
+            for application in applications
+        ]
+        jobs_data.append(job_data)
+
+    return jsonify(jobs_data), 200
+

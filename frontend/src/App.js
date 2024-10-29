@@ -2,7 +2,7 @@ import React, { useContext, useEffect } from 'react';
 import './App.css';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { UserContext, UserProvider } from './contexts/UserContext';
+import { UserContext, UserProvider } from './contexts/UserContext';  // Ensure UserProvider is imported
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import NavbarComponent from './components/NavbarComponent';
 import HomePage from './views/HomePage';
@@ -16,17 +16,10 @@ import EmployerDashboard from './views/EmployerDashboard';
 import StudentApply from './views/StudentApply';
 import JobDescriptionPage from './views/JobDescriptionPage';
 import EditJobPage from './views/EditJobPage';
+import AdminDashboard from './views/AdminDashboard'; 
 
 function App() {
-  return (
-    <UserProvider>
-      <AppContent />
-    </UserProvider>
-  );
-}
-
-function AppContent() {
-  const { getCurrentUser } = useContext(UserContext);
+  const { getCurrentUser, user } = useContext(UserContext);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -47,14 +40,15 @@ function AppContent() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/find-job" element={<Findjob />} />
+              
+              {/* Add the Admin Dashboard route */}
+              <Route path="/admin-dashboard" element={<AdminDashboard />} />
+
               <Route path="/Dashboard" element={<CTDResourcesPage />} />
               <Route path="/employer-dashboard" element={<EmployerDashboard />} />
               <Route path="/apply" element={<StudentApply />} />
               <Route path="*" element={<h1>Not Found</h1>} />
-
-              {/* <Route path="/employers/:jobId" component={EditJobForm} /> */}
               <Route path="/edit-job/:jobId" element={<EditJobPage />} />
-
               <Route path="/job-description" element={<JobDescriptionPage />} />
             </Routes>
         </div>
@@ -65,4 +59,10 @@ function AppContent() {
   );
 }
 
-export default App;
+export default function WrappedApp() {
+  return (
+    <UserProvider>  {/* Wrap the entire app in UserProvider */}
+      <App />
+    </UserProvider>
+  );
+}
