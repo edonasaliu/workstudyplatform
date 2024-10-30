@@ -16,7 +16,9 @@ import EmployerDashboard from './views/EmployerDashboard';
 import StudentApply from './views/StudentApply';
 import JobDescriptionPage from './views/JobDescriptionPage';
 import EditJobPage from './views/EditJobPage';
-import AdminDashboard from './views/AdminDashboard'; 
+import AdminDashboard from './views/admin/AdminDashboard';
+import JobPostingDashboard from './views/admin/JobPostingDashboard';
+import WAPositionTracker from './views/admin/WAPositionTracker';
 
 function App() {
   const { getCurrentUser, user } = useContext(UserContext);
@@ -41,8 +43,9 @@ function App() {
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/find-job" element={<Findjob />} />
               
-              {/* Add the Admin Dashboard route */}
-              <Route path="/admin-dashboard" element={<AdminDashboard />} />
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/job-posting-dashboard" element={<JobPostingDashboard />} />
+              <Route path="/admin/wa-position-tracker" element={<WAPositionTracker />} />
 
               <Route path="/Dashboard" element={<CTDResourcesPage />} />
               <Route path="/employer-dashboard" element={<EmployerDashboard />} />

@@ -1,7 +1,9 @@
+// src/views/admin/JobPostingDashboard.js
+
 import React, { useEffect, useState } from 'react';
 import { Card, Button, Container, Row, Col, Modal } from 'react-bootstrap';
 
-const AdminDashboard = () => {
+const JobPostingDashboard = () => {
   const [jobs, setJobs] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
   const [showApplicationsModal, setShowApplicationsModal] = useState(false);
@@ -41,7 +43,10 @@ const AdminDashboard = () => {
 
   return (
     <Container className="my-5">
-      <h1 className="text-center mb-4">Admin Dashboard - Job Postings</h1>
+      <h1 className="text-center mb-4">Job Posting Dashboard</h1>
+      <p className="text-muted text-center">
+        Here you can review all job postings and view applications for each job.
+      </p>
       {jobs.length > 0 ? (
         jobs.map((job) => (
           <Card key={job.id} className="mb-3">
@@ -109,4 +114,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard;
+export default JobPostingDashboard;

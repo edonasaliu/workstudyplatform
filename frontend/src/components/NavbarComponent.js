@@ -8,66 +8,70 @@ const NavbarComponent = () => {
     const { user, logout } = useContext(UserContext);
     const [canReadEmployerDashboard, setCanReadEmployerDashboard] = useState(false);
     const [canReadStudentDashboard, setCanReadStudentDashboard] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);  
 
-    // State to track which link is being hovered
     const [hoverItem, setHoverItem] = useState('');
     const navigate = useNavigate();
+
     useEffect(() => {
         if (user) {
             const ability = defineAbilityFor(user);
             setCanReadEmployerDashboard(ability.can('read', 'employer-dashboard'));
             setCanReadStudentDashboard(ability.can('read', 'student-dashboard'));
+            setIsAdmin(user.role === 'admin');  // Check if user is admin
         } else {
             setCanReadEmployerDashboard(false);
             setCanReadStudentDashboard(false);
+            setIsAdmin(false);
         }
     }, [user]);
 
-    // const canReadStudentDashboard = ability && ability.can('read', 'student-dashboard');
-
-    // Function to handle mouse entering a nav item
-    const handleMouseEnter = (itemName) => {
-        setHoverItem(itemName);
-    };
-
-    // Function to handle mouse leaving a nav item
-    const handleMouseLeave = () => {
-        setHoverItem('');
-    };
-
+    const handleMouseEnter = (itemName) => setHoverItem(itemName);
+    const handleMouseLeave = () => setHoverItem('');
+    
     const handleLogout = async () => {
         await logout();
         navigate('/login');
     };
 
-    // Function to determine the style of nav links, including hover effect
     const navLinkStyle = (itemName) => ({
         color: hoverItem === itemName ? '#f45d26' : 'white',
-        marginRight: '10px', // Apply margin to all items except the last one
+        marginRight: '10px',
     });
 
-    // Inline style for last nav item to prevent marginRight
     const lastNavLinkStyle = (itemName) => ({
         color: hoverItem === itemName ? '#f45d26' : 'white',
     });
 
     return (
-        // Navbar with a black background and white text
         <Navbar bg="black" expand="lg" className="py-3" variant="dark" style={{ backgroundColor: 'black' }}>
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
             <Navbar.Collapse id="basic-navbar-nav">
                 <Nav className="me-auto">
                     {!user && (<Nav.Link as={NavLink} to="/">Home</Nav.Link>)}
-                    {canReadStudentDashboard && (<Nav.Link as={NavLink} to="/Dashboard">Dashboard</Nav.Link>)}
-                    {canReadStudentDashboard && (<Nav.Link as={NavLink} to="/find-job">Find Job</Nav.Link>)}
-                    {canReadEmployerDashboard && (<Nav.Link as={NavLink} to="/employer-dashboard">Employer Dashboard</Nav.Link>)}
-                    {canReadEmployerDashboard && (
-                        <Nav.Link as={NavLink} to="/employers">Post a Job</Nav.Link>
+                    
+                    {isAdmin ? (
+                        // Show only for admin users
+                        <>
+                        <Nav.Link as={NavLink} to="/admin/job-posting-dashboard">Job Postings</Nav.Link>
+                        <Nav.Link as={NavLink} to="/admin/wa-position-tracker">WA Position Tracker</Nav.Link>
+                        </>
+
+                    ) : (
+                        // Show student or employer dashboards based on permissions
+                        <>
+                            {canReadStudentDashboard && (<Nav.Link as={NavLink} to="/Dashboard">Dashboard</Nav.Link>)}
+                            {canReadStudentDashboard && (<Nav.Link as={NavLink} to="/find-job">Find Job</Nav.Link>)}
+                            {canReadEmployerDashboard && (<Nav.Link as={NavLink} to="/employer-dashboard">Employer Dashboard</Nav.Link>)}
+                            {canReadEmployerDashboard && (
+                                <Nav.Link as={NavLink} to="/employers">Post a Job</Nav.Link>
+                            )}
+                        </>
                     )}
                 </Nav>
 
-                <Nav className="ms-auto" style={{ paddingRight: '15px', paddingLeft: '15px' }}> {/* Padding added to the login/register nav */}
-                    {!user ? ( // Check if the user is logged in
+                <Nav className="ms-auto" style={{ paddingRight: '15px', paddingLeft: '15px' }}>
+                    {!user ? (
                         <>
                             <Nav.Link
                                 as={NavLink}
