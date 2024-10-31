@@ -18,7 +18,7 @@ const NavbarComponent = () => {
             const ability = defineAbilityFor(user);
             setCanReadEmployerDashboard(ability.can('read', 'employer-dashboard'));
             setCanReadStudentDashboard(ability.can('read', 'student-dashboard'));
-            setIsAdmin(user.role === 'admin');  // Check if user is admin
+            setIsAdmin(user.role === 'admin');  
         } else {
             setCanReadEmployerDashboard(false);
             setCanReadStudentDashboard(false);
@@ -55,6 +55,7 @@ const NavbarComponent = () => {
                         <>
                         <Nav.Link as={NavLink} to="/admin/job-posting-dashboard">Job Postings</Nav.Link>
                         <Nav.Link as={NavLink} to="/admin/wa-position-tracker">WA Position Tracker</Nav.Link>
+                        <Nav.Link as={NavLink} to="/admin/teams">Teams</Nav.Link>
                         </>
 
                     ) : (

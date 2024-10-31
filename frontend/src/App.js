@@ -19,6 +19,7 @@ import EditJobPage from './views/EditJobPage';
 import AdminDashboard from './views/admin/AdminDashboard';
 import JobPostingDashboard from './views/admin/JobPostingDashboard';
 import WAPositionTracker from './views/admin/WAPositionTracker';
+import TeamsOverview from './views/admin/TeamsOverview';
 
 function App() {
   const { getCurrentUser, user } = useContext(UserContext);
@@ -53,6 +54,7 @@ function App() {
               <Route path="*" element={<h1>Not Found</h1>} />
               <Route path="/edit-job/:jobId" element={<EditJobPage />} />
               <Route path="/job-description" element={<JobDescriptionPage />} />
+              <Route path="/admin/teams" element={<TeamsOverview />} />
             </Routes>
         </div>
         <FooterComponent />
