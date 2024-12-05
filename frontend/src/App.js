@@ -2,7 +2,7 @@ import React, { useContext, useEffect } from 'react';
 import './App.css';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { UserContext, UserProvider } from './contexts/UserContext';  // Ensure UserProvider is imported
+import { UserContext, UserProvider } from './contexts/UserContext';  
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import NavbarComponent from './components/NavbarComponent';
 import HomePage from './views/HomePage';
@@ -18,7 +18,6 @@ import JobDescriptionPage from './views/JobDescriptionPage';
 import EditJobPage from './views/EditJobPage';
 import AdminDashboard from './views/admin/AdminDashboard';
 import JobPostingDashboard from './views/admin/JobPostingDashboard';
-import WAPositionTracker from './views/admin/WAPositionTracker';
 import TeamsOverview from './views/admin/TeamsOverview';
 
 function App() {
@@ -46,7 +45,6 @@ function App() {
               
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/job-posting-dashboard" element={<JobPostingDashboard />} />
-              <Route path="/admin/wa-position-tracker" element={<WAPositionTracker />} />
 
               <Route path="/Dashboard" element={<CTDResourcesPage />} />
               <Route path="/employer-dashboard" element={<EmployerDashboard />} />
