@@ -68,6 +68,7 @@ const JobPostingDashboard = () => {
                   <Button
                     variant="primary"
                     onClick={() => handleViewApplications(job)}
+                    style={{ backgroundColor: "#f45d26", borderColor: "#f45d26" }}
                   >
                     View Applications
                   </Button>

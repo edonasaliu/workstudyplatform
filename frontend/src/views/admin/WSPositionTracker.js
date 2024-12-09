@@ -74,22 +74,29 @@ const WSPositionTracker = () => {
   };
 
   const handleImport = (data) => {
+    // Ensure the data matches the required structure
     const formattedData = data.map((row) => ({
-      student_id: row[0],
-      minerva_email: row[1],
-      full_name: row[2],
-      expected_grad_year: row[3],
+      student_id: row[0] || "",
+      minerva_email: row[1] || "",
+      full_name: row[2] || "",
+      expected_grad_year: row[3] || "",
       ws_eligible: row[4] === "Yes",
-      role: row[5],
-      manager_name: row[6],
-      paycom_manager: row[7],
-      manager_email: row[8],
-      department_name: row[9],
-      paycom_id: row[10],
-      contractor_status: row[11],
-      notes: row[12],
-      merge_status: row[13],
+      role: row[5] || "",
+      manager_name: row[6] || "",
+      paycom_manager: row[7] || "",
+      manager_email: row[8] || "",
+      department_name: row[9] || "",
+      paycom_id: row[10] || "",
+      contractor_status: row[11] || "",
+      notes: row[12] || "",
+      merge_status: row[13] || "",
     }));
+
+    if (formattedData.length === 0) {
+      alert("No valid data found in the CSV file. Please check your file and try again.");
+      return;
+    }
+
     setEntries((prev) => [...prev, ...formattedData]);
   };
 
@@ -119,6 +126,7 @@ const WSPositionTracker = () => {
             <CSVReader
               onFileLoaded={handleImport}
               parserOptions={{ header: false }}
+              inputId="csv-upload"
               inputStyle={{ display: "none" }}
             />
             <label
@@ -140,7 +148,6 @@ const WSPositionTracker = () => {
             </label>
             <Button
               variant="info"
-              onClick={() => {}}
               style={{
                 backgroundColor: "#17a2b8",
                 border: "none",
@@ -290,9 +297,14 @@ const WSPositionTracker = () => {
             <Button variant="secondary" onClick={handleCloseModal}>
               Cancel
             </Button>
-            <Button variant="primary" onClick={handleSubmit}>
+            <Button 
+              variant="primary" 
+              onClick={handleSubmit} 
+              style={{ backgroundColor: "#f45d26", borderColor: "#f45d26" }}
+            >
               {isEditing ? "Save Changes" : "Add Entry"}
             </Button>
+
           </Modal.Footer>
         </Modal>
       </div>

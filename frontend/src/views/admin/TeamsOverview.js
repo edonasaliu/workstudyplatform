@@ -172,6 +172,7 @@ const TeamsOverview = () => {
             onClick={handleExport}
             style={{
               backgroundColor: "#17a2b8",
+              color: "white",
               border: "none",
               height: "40px",
               display: "flex",
@@ -212,33 +213,39 @@ const TeamsOverview = () => {
           </tr>
         </thead>
         <tbody>
-          {filteredTeams.map((team, index) => (
-            <tr key={index}>
-              <td>{team.name}</td>
-              <td>{team.manager}</td>
-              <td>{team.email}</td>
-              <td>{team.maxStudents}</td>
-              <td>{team.contact}</td>
-              <td>{team.priority}</td>
-              <td>{team.recruitingFor}</td>
-              <td>
-                <Button
-                  variant="light"
-                  className="me-2"
+        {filteredTeams.map((team, index) => (
+          <tr key={index}>
+            <td>{team.name}</td>
+            <td>{team.manager}</td>
+            <td>{team.email}</td>
+            <td>{team.maxStudents}</td>
+            <td>{team.contact}</td>
+            <td>{team.priority}</td>
+            <td>{team.recruitingFor}</td>
+            <td>
+              <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+                <FaPen
+                  style={{
+                    color: "#007bff",
+                    cursor: "pointer",
+                    fontSize: "18px",
+                  }}
                   onClick={() => handleOpenModal(team, index)}
-                >
-                  <FaPen />
-                </Button>
-                <Button
-                  variant="danger"
+                />
+                <FaTrash
+                  style={{
+                    color: "#dc3545",
+                    cursor: "pointer",
+                    fontSize: "18px",
+                  }}
                   onClick={() => handleDeleteTeam(index)}
-                >
-                  <FaTrash />
-                </Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
+                />
+              </div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+
       </Table>
 
       {/* Modal for adding or editing a team */}
