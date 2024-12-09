@@ -5,6 +5,9 @@ import CSVReader from "react-csv-reader"; // For CSV Import
 import { FaPen, FaTrash, FaPlus, FaFileCsv, FaUpload } from "react-icons/fa"; // Icons
 import axios from "axios"; // For API calls
 
+const BASE_URL = "http://localhost:8080"; // Adjust the port if necessary
+
+
 const WSPositionTracker = () => {
   const [entries, setEntries] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -13,18 +16,35 @@ const WSPositionTracker = () => {
   const [editingId, setEditingId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Fetch entries from the backend
   const fetchEntries = async () => {
     try {
-      const response = await axios.get("/api/ws-position-tracker");
-      setEntries(response.data);
+      const response = await fetch(`${BASE_URL}/ws-position-tracker`);
+      if (response.ok) {
+        const data = await response.json();
+        setEntries(data);
+      } else {
+        console.error("Failed to fetch WS Tracker entries:", response.statusText);
+      }
     } catch (error) {
       console.error("Error fetching WS Tracker entries:", error);
     }
   };
+  
 
   useEffect(() => {
-    fetchEntries();
+    const fetchPositions = async () => {
+      try {
+        const response = await fetch(`${BASE_URL}/ws-position-tracker`);
+        console.log("Fetching from:", `${BASE_URL}/ws-position-tracker`);
+        const data = await response.json();
+        setEntries(data);
+      } catch (error) {
+        console.error("Error fetching positions:", error);
+      }
+    };
+    
+  
+    fetchPositions();
   }, []);
 
   const handleShowModal = (entry = {}, id = null) => {
@@ -43,62 +63,101 @@ const WSPositionTracker = () => {
     const { name, value, type, checked } = e.target;
     setFormData({ ...formData, [name]: type === "checkbox" ? checked : value });
   };
-
   const handleSubmit = async () => {
-    if (!formData.student_id || !formData.minerva_email || !formData.full_name) {
-      alert("Please fill in all required fields.");
-      return;
-    }
-
+    const method = isEditing ? "PUT" : "POST";
+    const url = isEditing
+      ? `${BASE_URL}/ws-position-tracker/${editingId}`
+      : `${BASE_URL}/ws-position-tracker`;
     try {
-      if (isEditing) {
-        await axios.put(`/api/ws-position-tracker/${editingId}`, formData);
-      } else {
-        await axios.post(`/api/ws-position-tracker`, formData);
+      console.log("Sending data:", formData); // Log the formData being sent
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+  
+      if (!response.ok) {
+        throw new Error(`API responded with status: ${response.status}`);
       }
-      fetchEntries();
-      handleCloseModal();
+  
+      const data = await response.json();
+      console.log("Response data:", data); // Log the backend response
+      setEntries((prev) =>
+        isEditing
+          ? prev.map((e) => (e.id === editingId ? data : e))
+          : [...prev, data]
+      );
+      setShowModal(false);
+      setFormData({});
     } catch (error) {
-      console.error("Error saving data:", error.response || error);
-      alert("Failed to save data. Please try again.");
+      console.error("Error saving position:", error);
     }
   };
+  
+  
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`/api/ws-position-tracker/${id}`);
-      fetchEntries();
+      const response = await fetch(`${BASE_URL}/ws-position-tracker/${id}`, {
+        method: "DELETE",
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to delete WS Tracker entry");
+      }
+  
+      setEntries((prev) => prev.filter((entry) => entry.id !== id));
     } catch (error) {
       console.error("Error deleting WS Tracker entry:", error);
     }
   };
+  
 
-  const handleImport = (data) => {
-    // Ensure the data matches the required structure
-    const formattedData = data.map((row) => ({
-      student_id: row[0] || "",
-      minerva_email: row[1] || "",
-      full_name: row[2] || "",
-      expected_grad_year: row[3] || "",
-      ws_eligible: row[4] === "Yes",
-      role: row[5] || "",
-      manager_name: row[6] || "",
-      paycom_manager: row[7] || "",
-      manager_email: row[8] || "",
-      department_name: row[9] || "",
-      paycom_id: row[10] || "",
-      contractor_status: row[11] || "",
-      notes: row[12] || "",
-      merge_status: row[13] || "",
-    }));
+const handleImport = async (data) => {
+  // Ensure the data matches the required structure
+  const formattedData = data.map((row) => ({
+    student_id: row[0] || "",
+    minerva_email: row[1] || "",
+    full_name: row[2] || "",
+    expected_grad_year: row[3] || "",
+    ws_eligible: row[4] === "Yes",
+    role: row[5] || "",
+    manager_name: row[6] || "",
+    paycom_manager: row[7] || "",
+    manager_email: row[8] || "",
+    department_name: row[9] || "",
+    paycom_id: row[10] || "",
+    contractor_status: row[11] || "",
+    notes: row[12] || "",
+    merge_status: row[13] || "",
+  }));
 
-    if (formattedData.length === 0) {
-      alert("No valid data found in the CSV file. Please check your file and try again.");
-      return;
+  try {
+    // Save each entry to the backend
+    for (const entry of formattedData) {
+      const response = await fetch(`${BASE_URL}/ws-position-tracker`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(entry),
+      });
+
+      if (!response.ok) {
+        console.error(`Failed to save entry:`, entry, await response.text());
+        continue;
+      }
+
+      const savedEntry = await response.json();
+      // Update frontend state after saving each entry
+      setEntries((prev) => [...prev, savedEntry]);
     }
 
-    setEntries((prev) => [...prev, ...formattedData]);
-  };
+    alert("Data imported successfully!");
+  } catch (error) {
+    console.error("Error importing data:", error);
+    alert("Failed to import data. Please try again.");
+  }
+};
+
 
   const filteredEntries = entries.filter((entry) =>
     Object.values(entry)

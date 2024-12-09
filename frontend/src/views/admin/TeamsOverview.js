@@ -12,11 +12,10 @@ import {
 import CSVReader from "react-csv-reader";
 import { FaTrash, FaPen, FaFileExport, FaUpload } from "react-icons/fa";
 
+const BASE_URL = "http://localhost:8080";
+
 const TeamsOverview = () => {
-  const [teams, setTeams] = useState(() => {
-    const savedTeams = localStorage.getItem("teams");
-    return savedTeams ? JSON.parse(savedTeams) : [];
-  });
+  const [teams, setTeams] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
@@ -31,48 +30,108 @@ const TeamsOverview = () => {
   });
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Fetch teams from the backend
   useEffect(() => {
-    localStorage.setItem("teams", JSON.stringify(teams));
-  }, [teams]);
+    const fetchTeams = async () => {
+      try {
+        const response = await fetch("http://localhost:8080/teams");
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Fetched teams:", data);
+          setTeams(data);
+        } else {
+          console.error("Failed to fetch teams:", response.statusText);
+        
+        }
+      } catch (error) {
+        console.error("Error fetching teams:", error);
+      }
+    };
+
+    fetchTeams();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleAddTeam = () => {
-    if (isEditing) {
-      const updatedTeams = [...teams];
-      updatedTeams[editIndex] = formData;
-      setTeams(updatedTeams);
-    } else {
-      setTeams([...teams, formData]);
+  const handleSubmit = async () => {
+    try {
+      if (!formData.name || !formData.manager || !formData.email || !formData.priority) {
+        alert("Please fill in all required fields.");
+        return;
+      }
+  
+      const method = isEditing ? "PUT" : "POST";
+      const url = isEditing
+        ? `${BASE_URL}/teams/${editIndex}`
+        : `${BASE_URL}/teams`;
+  
+      const token = localStorage.getItem("authToken"); // Replace with your token retrieval method
+      console.log("Token being sent:", token); // Debug token
+  
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // Include cookies for session authentication
+        body: JSON.stringify(formData),
+      });
+      
+  
+      if (!response.ok) {
+        console.error("Response status:", response.status); // Debug response status
+        throw new Error(`API responded with status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+  
+      setTeams((prev) =>
+        isEditing
+          ? prev.map((team) => (team.id === editIndex ? data : team))
+          : [...prev, data]
+      );
+  
+      setFormData({
+        name: "",
+        manager: "",
+        email: "",
+        maxStudents: "",
+        contact: "",
+        priority: "",
+        recruitingFor: "",
+      });
+  
+      setShowModal(false);
+      setIsEditing(false);
+      setEditIndex(null);
+    } catch (error) {
+      console.error("Error saving team:", error);
+      alert("Failed to save team. Please try again.");
     }
-    setFormData({
-      name: "",
-      manager: "",
-      email: "",
-      maxStudents: "",
-      contact: "",
-      priority: "",
-      recruitingFor: "",
-    });
-    setShowModal(false);
-    setIsEditing(false);
-    setEditIndex(null);
+  };
+  
+  
+
+  const handleDeleteTeam = async (id) => {
+    try {
+      const response = await fetch(`/teams/${id}`, { method: "DELETE" });
+      if (!response.ok) throw new Error("Failed to delete team");
+      setTeams((prev) => prev.filter((team) => team.id !== id));
+    } catch (error) {
+      console.error("Error deleting team:", error);
+    }
   };
 
-  const handleDeleteTeam = (index) => {
-    const updatedTeams = teams.filter((_, i) => i !== index);
-    setTeams(updatedTeams);
-  };
-
-  const handleOpenModal = (team, index) => {
+  const handleOpenModal = (team = null) => {
     if (team) {
-      setFormData(team);
-      setIsEditing(true);
-      setEditIndex(index);
+      setFormData(team); // Populate the form with the selected team's data
+      setIsEditing(true); // Set editing mode
+      setEditIndex(team.id); // Set the team's id as the edit index
     } else {
+      // Reset the form for adding a new team
       setFormData({
         name: "",
         manager: "",
@@ -85,8 +144,9 @@ const TeamsOverview = () => {
       setIsEditing(false);
       setEditIndex(null);
     }
-    setShowModal(true);
+    setShowModal(true); // Show the modal
   };
+  
 
   const filteredTeams = teams.filter((team) =>
     Object.values(team).some((value) =>
@@ -95,6 +155,7 @@ const TeamsOverview = () => {
   );
 
   const handleFileUpload = (data) => {
+    // Map CSV data to match backend structure
     const importedTeams = data.map((row) => ({
       name: row["Team Name"],
       manager: row["Manager"],
@@ -104,7 +165,23 @@ const TeamsOverview = () => {
       priority: row["Priority"],
       recruitingFor: row["Recruiting For"],
     }));
-    setTeams([...teams, ...importedTeams]);
+
+    // Save to the backend
+    importedTeams.forEach(async (team) => {
+      try {
+        const response = await fetch("/teams", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(team),
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setTeams((prev) => [...prev, data]);
+        }
+      } catch (error) {
+        console.error("Error importing team:", error);
+      }
+    });
   };
 
   const handleExport = () => {
@@ -139,9 +216,7 @@ const TeamsOverview = () => {
             placeholder="Search teams..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              height: "40px",
-            }}
+            style={{ height: "40px" }}
           />
         </InputGroup>
         <div className="d-flex" style={{ gap: "10px" }}>
@@ -185,7 +260,7 @@ const TeamsOverview = () => {
           </Button>
           <Button
             variant="primary"
-            onClick={() => handleOpenModal(null, null)}
+            onClick={() => handleOpenModal()}
             style={{
               backgroundColor: "#f45d26",
               borderColor: "transparent",
@@ -213,42 +288,40 @@ const TeamsOverview = () => {
           </tr>
         </thead>
         <tbody>
-        {filteredTeams.map((team, index) => (
-          <tr key={index}>
-            <td>{team.name}</td>
-            <td>{team.manager}</td>
-            <td>{team.email}</td>
-            <td>{team.maxStudents}</td>
-            <td>{team.contact}</td>
-            <td>{team.priority}</td>
-            <td>{team.recruitingFor}</td>
-            <td>
-              <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-                <FaPen
-                  style={{
-                    color: "#007bff",
-                    cursor: "pointer",
-                    fontSize: "18px",
-                  }}
-                  onClick={() => handleOpenModal(team, index)}
-                />
-                <FaTrash
-                  style={{
-                    color: "#dc3545",
-                    cursor: "pointer",
-                    fontSize: "18px",
-                  }}
-                  onClick={() => handleDeleteTeam(index)}
-                />
-              </div>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-
+          {filteredTeams.map((team) => (
+            <tr key={team.id}>
+              <td>{team.name}</td>
+              <td>{team.manager}</td>
+              <td>{team.email}</td>
+              <td>{team.maxStudents}</td>
+              <td>{team.contact}</td>
+              <td>{team.priority}</td>
+              <td>{team.recruitingFor}</td>
+              <td>
+                <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+                  <FaPen
+                    style={{
+                      color: "#007bff",
+                      cursor: "pointer",
+                      fontSize: "18px",
+                    }}
+                    onClick={() => handleOpenModal(team)}
+                  />
+                  <FaTrash
+                    style={{
+                      color: "#dc3545",
+                      cursor: "pointer",
+                      fontSize: "18px",
+                    }}
+                    onClick={() => handleDeleteTeam(team.id)}
+                  />
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
       </Table>
 
-      {/* Modal for adding or editing a team */}
       <Modal show={showModal} onHide={() => setShowModal(false)}>
         <Modal.Header closeButton>
           <Modal.Title>{isEditing ? "Edit Team" : "Add New Team"}</Modal.Title>
@@ -265,7 +338,6 @@ const TeamsOverview = () => {
                     value={formData.name}
                     onChange={handleChange}
                     placeholder="Enter team name"
-                    required
                   />
                 </Form.Group>
               </Col>
@@ -278,7 +350,6 @@ const TeamsOverview = () => {
                     value={formData.manager}
                     onChange={handleChange}
                     placeholder="Enter manager's name"
-                    required
                   />
                 </Form.Group>
               </Col>
@@ -293,7 +364,6 @@ const TeamsOverview = () => {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="Enter email"
-                    required
                   />
                 </Form.Group>
               </Col>
@@ -306,7 +376,6 @@ const TeamsOverview = () => {
                     value={formData.maxStudents}
                     onChange={handleChange}
                     placeholder="Enter max students"
-                    required
                   />
                 </Form.Group>
               </Col>
@@ -319,22 +388,17 @@ const TeamsOverview = () => {
                 value={formData.contact}
                 onChange={handleChange}
                 placeholder="Enter contact info"
-                required
               />
             </Form.Group>
             <Form.Group className="mb-3" controlId="priority">
               <Form.Label>Priority</Form.Label>
-              <Form.Select
+              <Form.Control
+                type="text"
                 name="priority"
                 value={formData.priority}
                 onChange={handleChange}
-                required
-              >
-                <option value="">Select Priority</option>
-                <option value="High">High</option>
-                <option value="Medium">Medium</option>
-                <option value="Low">Low</option>
-              </Form.Select>
+                placeholder="Enter priority"
+              />
             </Form.Group>
             <Form.Group className="mb-3" controlId="recruitingFor">
               <Form.Label>Recruiting For</Form.Label>
@@ -344,7 +408,6 @@ const TeamsOverview = () => {
                 value={formData.recruitingFor}
                 onChange={handleChange}
                 placeholder="Enter recruiting area"
-                required
               />
             </Form.Group>
           </Form>
@@ -355,7 +418,7 @@ const TeamsOverview = () => {
           </Button>
           <Button
             variant="primary"
-            onClick={handleAddTeam}
+            onClick={handleSubmit}
             style={{
               backgroundColor: "#f45d26",
               borderColor: "transparent",
