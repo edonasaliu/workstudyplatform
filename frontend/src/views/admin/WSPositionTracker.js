@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Form, Modal } from "react-bootstrap";
+import { Table, Button, Form, Modal, InputGroup } from "react-bootstrap";
 import { CSVLink } from "react-csv"; // For CSV Export
 import CSVReader from "react-csv-reader"; // For CSV Import
 import { FaPen, FaTrash, FaPlus, FaFileCsv, FaUpload } from "react-icons/fa"; // Icons
@@ -11,6 +11,7 @@ const WSPositionTracker = () => {
   const [formData, setFormData] = useState({});
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch entries from the backend
   const fetchEntries = async () => {
@@ -44,30 +45,24 @@ const WSPositionTracker = () => {
   };
 
   const handleSubmit = async () => {
-    // Ensure required fields are not empty
     if (!formData.student_id || !formData.minerva_email || !formData.full_name) {
       alert("Please fill in all required fields.");
       return;
     }
-  
+
     try {
       if (isEditing) {
-        // Update existing entry
         await axios.put(`/api/ws-position-tracker/${editingId}`, formData);
       } else {
-        // Add new entry
         await axios.post(`/api/ws-position-tracker`, formData);
       }
-      fetchEntries(); // Reload the entries from the database
-      handleCloseModal(); // Close the modal
-      console.log("Data saved successfully!");
+      fetchEntries();
+      handleCloseModal();
     } catch (error) {
       console.error("Error saving data:", error.response || error);
       alert("Failed to save data. Please try again.");
     }
   };
-  
-  
 
   const handleDelete = async (id) => {
     try {
@@ -98,86 +93,87 @@ const WSPositionTracker = () => {
     setEntries((prev) => [...prev, ...formattedData]);
   };
 
-  return (
-    <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#f9f9f9" }}>
-      {/* Sidebar */}
-      <div
-        style={{
-          width: "250px",
-          backgroundColor: "#fff",
-          borderRight: "1px solid #ddd",
-          padding: "20px",
-          boxShadow: "2px 0px 5px rgba(0, 0, 0, 0.1)",
-        }}
-      >
-        <h3 style={{ marginBottom: "20px", color: "#333" }}>Actions</h3>
-        <Button
-          onClick={() => handleShowModal()}
-          style={{
-            width: "100%",
-            backgroundColor: "#ff7700",
-            border: "none",
-            color: "white",
-            padding: "10px",
-            marginBottom: "15px",
-            textAlign: "left",
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-          }}
-        >
-          <FaPlus /> Add New Entry
-        </Button>
-        <Button
-          style={{
-            width: "100%",
-            backgroundColor: "#ff7700",
-            border: "none",
-            color: "white",
-            padding: "10px",
-            marginBottom: "15px",
-            textAlign: "left",
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-          }}
-        >
-          <FaFileCsv />
-          <CSVLink
-            data={entries}
-            filename="ws_tracker.csv"
-            style={{ textDecoration: "none", color: "white" }}
-          >
-            Export to CSV
-          </CSVLink>
-        </Button>
-        <div>
-          <CSVReader
-            onFileLoaded={handleImport}
-            parserOptions={{ header: false }}
-            inputStyle={{
-              width: "100%",
-              backgroundColor: "#ff7700",
-              color: "white",
-              border: "none",
-              padding: "10px",
-              cursor: "pointer",
-              borderRadius: "5px",
-            }}
-            label={
-              <span style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <FaUpload /> Import CSV
-              </span>
-            }
-          />
-        </div>
-      </div>
+  const filteredEntries = entries.filter((entry) =>
+    Object.values(entry)
+      .join(" ")
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase())
+  );
 
-      {/* Main Content */}
-      <div style={{ flex: 1, padding: "20px" }}>
+  return (
+    <div style={{ minHeight: "100vh", backgroundColor: "#f9f9f9" }}>
+      <div style={{ padding: "20px" }}>
         <h1 style={{ textAlign: "center", color: "#333", marginBottom: "20px" }}>
           WS Position Tracker
         </h1>
+        <div className="d-flex align-items-center mb-4 justify-content-between">
+          <InputGroup style={{ flex: 1, marginRight: "20px" }}>
+            <Form.Control
+              placeholder="Search entries..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ height: "40px" }}
+            />
+          </InputGroup>
+          <div className="d-flex">
+            <CSVReader
+              onFileLoaded={handleImport}
+              parserOptions={{ header: false }}
+              inputStyle={{ display: "none" }}
+            />
+            <label
+              htmlFor="csv-upload"
+              style={{
+                backgroundColor: "#17a2b8",
+                color: "white",
+                padding: "10px 20px",
+                borderRadius: "5px",
+                cursor: "pointer",
+                marginRight: "10px",
+                height: "40px",
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+              }}
+            >
+              <FaUpload /> Import CSV
+            </label>
+            <Button
+              variant="info"
+              onClick={() => {}}
+              style={{
+                backgroundColor: "#17a2b8",
+                border: "none",
+                height: "40px",
+                display: "flex",
+                alignItems: "center",
+                marginRight: "10px",
+              }}
+            >
+              <FaFileCsv />
+              <CSVLink
+                data={entries}
+                filename="ws_tracker.csv"
+                style={{ textDecoration: "none", color: "white" }}
+              >
+                Export CSV
+              </CSVLink>
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => handleShowModal()}
+              style={{
+                backgroundColor: "#f45d26",
+                borderColor: "transparent",
+                height: "40px",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <FaPlus /> Add New Entry
+            </Button>
+          </div>
+        </div>
         <Table
           striped
           bordered
@@ -208,7 +204,7 @@ const WSPositionTracker = () => {
             </tr>
           </thead>
           <tbody>
-            {entries.map((entry, index) => (
+            {filteredEntries.map((entry, index) => (
               <tr key={index}>
                 <td>{entry.student_id}</td>
                 <td>{entry.minerva_email}</td>
@@ -249,12 +245,9 @@ const WSPositionTracker = () => {
           </tbody>
         </Table>
 
-        {/* Modal */}
         <Modal show={showModal} onHide={handleCloseModal}>
           <Modal.Header closeButton>
-            <Modal.Title>
-              {isEditing ? "Edit Entry" : "Add New Entry"}
-            </Modal.Title>
+            <Modal.Title>{isEditing ? "Edit Entry" : "Add New Entry"}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             {[
