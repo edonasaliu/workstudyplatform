@@ -17,9 +17,10 @@ const TeamsOverview = () => {
     const savedTeams = localStorage.getItem("teams");
     return savedTeams ? JSON.parse(savedTeams) : [];
   });
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [newTeam, setNewTeam] = useState({
+  const [showModal, setShowModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editIndex, setEditIndex] = useState(null);
+  const [formData, setFormData] = useState({
     name: "",
     manager: "",
     email: "",
@@ -28,7 +29,6 @@ const TeamsOverview = () => {
     priority: "",
     recruitingFor: "",
   });
-  const [editIndex, setEditIndex] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -36,12 +36,19 @@ const TeamsOverview = () => {
   }, [teams]);
 
   const handleChange = (e) => {
-    setNewTeam({ ...newTeam, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleAddTeam = () => {
-    setTeams([...teams, newTeam]);
-    setNewTeam({
+    if (isEditing) {
+      const updatedTeams = [...teams];
+      updatedTeams[editIndex] = formData;
+      setTeams(updatedTeams);
+    } else {
+      setTeams([...teams, formData]);
+    }
+    setFormData({
       name: "",
       manager: "",
       email: "",
@@ -50,7 +57,9 @@ const TeamsOverview = () => {
       priority: "",
       recruitingFor: "",
     });
-    setShowAddModal(false);
+    setShowModal(false);
+    setIsEditing(false);
+    setEditIndex(null);
   };
 
   const handleDeleteTeam = (index) => {
@@ -58,27 +67,25 @@ const TeamsOverview = () => {
     setTeams(updatedTeams);
   };
 
-  const handleEditTeam = () => {
-    const updatedTeams = [...teams];
-    updatedTeams[editIndex] = newTeam;
-    setTeams(updatedTeams);
-    setNewTeam({
-      name: "",
-      manager: "",
-      email: "",
-      maxStudents: "",
-      contact: "",
-      priority: "",
-      recruitingFor: "",
-    });
-    setShowEditModal(false);
-    setEditIndex(null);
-  };
-
-  const handleOpenEditModal = (team, index) => {
-    setNewTeam(team);
-    setEditIndex(index);
-    setShowEditModal(true);
+  const handleOpenModal = (team, index) => {
+    if (team) {
+      setFormData(team);
+      setIsEditing(true);
+      setEditIndex(index);
+    } else {
+      setFormData({
+        name: "",
+        manager: "",
+        email: "",
+        maxStudents: "",
+        contact: "",
+        priority: "",
+        recruitingFor: "",
+      });
+      setIsEditing(false);
+      setEditIndex(null);
+    }
+    setShowModal(true);
   };
 
   const filteredTeams = teams.filter((team) =>
@@ -149,7 +156,7 @@ const TeamsOverview = () => {
             style={{
               backgroundColor: "#17a2b8",
               color: "white",
-              padding: "1px 20px",
+              padding: "10px 20px",
               borderRadius: "10px",
               cursor: "pointer",
               height: "40px",
@@ -177,7 +184,7 @@ const TeamsOverview = () => {
           </Button>
           <Button
             variant="primary"
-            onClick={() => setShowAddModal(true)}
+            onClick={() => handleOpenModal(null, null)}
             style={{
               backgroundColor: "#f45d26",
               borderColor: "transparent",
@@ -218,7 +225,7 @@ const TeamsOverview = () => {
                 <Button
                   variant="light"
                   className="me-2"
-                  onClick={() => handleOpenEditModal(team, index)}
+                  onClick={() => handleOpenModal(team, index)}
                 >
                   <FaPen />
                 </Button>
@@ -234,10 +241,10 @@ const TeamsOverview = () => {
         </tbody>
       </Table>
 
-      {/* Modal for adding a new team */}
-      <Modal show={showAddModal} onHide={() => setShowAddModal(false)}>
+      {/* Modal for adding or editing a team */}
+      <Modal show={showModal} onHide={() => setShowModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Add New Team</Modal.Title>
+          <Modal.Title>{isEditing ? "Edit Team" : "Add New Team"}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
@@ -248,7 +255,7 @@ const TeamsOverview = () => {
                   <Form.Control
                     type="text"
                     name="name"
-                    value={newTeam.name}
+                    value={formData.name}
                     onChange={handleChange}
                     placeholder="Enter team name"
                     required
@@ -261,7 +268,7 @@ const TeamsOverview = () => {
                   <Form.Control
                     type="text"
                     name="manager"
-                    value={newTeam.manager}
+                    value={formData.manager}
                     onChange={handleChange}
                     placeholder="Enter manager's name"
                     required
@@ -269,18 +276,85 @@ const TeamsOverview = () => {
                 </Form.Group>
               </Col>
             </Row>
+            <Row className="mb-3">
+              <Col>
+                <Form.Group controlId="email">
+                  <Form.Label>Email</Form.Label>
+                  <Form.Control
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Enter email"
+                    required
+                  />
+                </Form.Group>
+              </Col>
+              <Col>
+                <Form.Group controlId="maxStudents">
+                  <Form.Label>Max Students</Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="maxStudents"
+                    value={formData.maxStudents}
+                    onChange={handleChange}
+                    placeholder="Enter max students"
+                    required
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+            <Form.Group className="mb-3" controlId="contact">
+              <Form.Label>Contact</Form.Label>
+              <Form.Control
+                type="text"
+                name="contact"
+                value={formData.contact}
+                onChange={handleChange}
+                placeholder="Enter contact info"
+                required
+              />
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="priority">
+              <Form.Label>Priority</Form.Label>
+              <Form.Select
+                name="priority"
+                value={formData.priority}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select Priority</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </Form.Select>
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="recruitingFor">
+              <Form.Label>Recruiting For</Form.Label>
+              <Form.Control
+                type="text"
+                name="recruitingFor"
+                value={formData.recruitingFor}
+                onChange={handleChange}
+                placeholder="Enter recruiting area"
+                required
+              />
+            </Form.Group>
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowAddModal(false)}>
+          <Button variant="secondary" onClick={() => setShowModal(false)}>
             Cancel
           </Button>
           <Button
             variant="primary"
             onClick={handleAddTeam}
-            style={{ backgroundColor: "#f45d26", borderColor: "transparent" }}
+            style={{
+              backgroundColor: "#f45d26",
+              borderColor: "transparent",
+            }}
           >
-            Add Team
+            {isEditing ? "Save Changes" : "Add Team"}
           </Button>
         </Modal.Footer>
       </Modal>
