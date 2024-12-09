@@ -27,8 +27,16 @@ const FooterComponent = () => {
     const currentYear = new Date().getFullYear();
 
     return (
-        <footer className="footer" style={{ backgroundColor: 'black', color: 'white' }}>
-            <Container>
+        <footer
+            className="footer"
+            style={{
+                backgroundColor: 'black',
+                color: 'white',
+                width: '100%', // Stretch to full width
+                padding: '0', // Remove default padding
+            }}
+        >
+            <Container fluid style={{ maxWidth: '100%', padding: '0 2rem' }}>
                 <Row className="py-4">
                     {/* Logo and Address Section */}
                     <Col md={3} className="mb-3">
@@ -53,7 +61,7 @@ const FooterComponent = () => {
                             <ul className="list-unstyled">
                                 <li><NavLink to="/admin">Main Dashboard</NavLink></li>
                                 <li><NavLink to="/admin/job-posting-dashboard">Job Postings Dashboard</NavLink></li>
-                                <li><NavLink to="/admin/wa-position-tracker">WA Position Tracker</NavLink></li>
+                                <li><NavLink to="/admin/ws-position-tracker">WS Position Tracker</NavLink></li>
                                 <li><NavLink to="/admin/teams">Teams Overview Dashboard</NavLink></li>
                             </ul>
                         </Col>
@@ -105,11 +113,10 @@ const FooterComponent = () => {
                         ©{currentYear} Minerva University, Inc. All Rights Reserved.
                     </Col>
                     <Col md={6} className="text-md-right mb-3">
-                        <p className="mb-0"><small>This is an ongoing project created by students. To recommend a feature, report a bug, or give feedback, email <a href="mailto:workstudy@minerva.edu" style={{ color: 'white' }}>workstudy@minerva.edu</a></small></p>
+                        <p className="mb-0"><small>This is an ongoing project created by Edona Saliu. To recommend a feature, report a bug, or give feedback, email <a href="mailto:edonasaliu@uni.minerva.edu" style={{ color: 'white' }}>edonasaliu@uni.minerva.edu</a></small></p>
                     </Col>
                 </Row>
             </Container>
-            <div style={{ backgroundColor: 'black', height: '4rem' }}></div>
         </footer>
     );
 };

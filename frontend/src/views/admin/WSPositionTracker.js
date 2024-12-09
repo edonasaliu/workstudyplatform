@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Table, Button, Form, Modal, InputGroup } from "react-bootstrap";
 import { CSVLink } from "react-csv"; // For CSV Export
 import CSVReader from "react-csv-reader"; // For CSV Import
-import { FaPen, FaTrash, FaPlus, FaFileCsv, FaUpload } from "react-icons/fa"; // Icons
+import { FaPen, FaTrash, FaPlus, FaFileExport, FaUpload } from "react-icons/fa"; // Icons
 import axios from "axios"; // For API calls
 
 const BASE_URL = "http://localhost:8080"; // Adjust the port if necessary
@@ -206,17 +206,21 @@ const handleImport = async (data) => {
               <FaUpload /> Import CSV
             </label>
             <Button
-              variant="info"
               style={{
                 backgroundColor: "#17a2b8",
-                border: "none",
+                color: "white",
+                padding: "10px 20px",
+                borderRadius: "5px",
+                cursor: "pointer",
+                marginRight: "10px",
                 height: "40px",
                 display: "flex",
                 alignItems: "center",
-                marginRight: "10px",
+                gap: "10px",
+                border: "none",
               }}
             >
-              <FaFileCsv />
+              <FaFileExport />
               <CSVLink
                 data={entries}
                 filename="ws_tracker.csv"
@@ -225,6 +229,7 @@ const handleImport = async (data) => {
                 Export CSV
               </CSVLink>
             </Button>
+
             <Button
               variant="primary"
               onClick={() => handleShowModal()}
