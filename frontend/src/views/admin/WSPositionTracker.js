@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Table, Button, Form, Modal } from "react-bootstrap";
 import { CSVLink } from "react-csv"; // For CSV Export
 import CSVReader from "react-csv-reader"; // For CSV Import
-import { FaPen, FaTrash, FaPlus, FaFileCsv, FaUpload } from "react-icons/fa"; // For icons
+import { FaPen, FaTrash, FaPlus, FaFileCsv, FaUpload } from "react-icons/fa"; // Icons
+import axios from "axios"; // For API calls
 
 const WSPositionTracker = () => {
   const [entries, setEntries] = useState([]);
@@ -10,6 +11,20 @@ const WSPositionTracker = () => {
   const [formData, setFormData] = useState({});
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
+
+  // Fetch entries from the backend
+  const fetchEntries = async () => {
+    try {
+      const response = await axios.get("/api/ws-position-tracker");
+      setEntries(response.data);
+    } catch (error) {
+      console.error("Error fetching WS Tracker entries:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchEntries();
+  }, []);
 
   const handleShowModal = (entry = {}, id = null) => {
     setFormData(entry);
@@ -28,21 +43,39 @@ const WSPositionTracker = () => {
     setFormData({ ...formData, [name]: type === "checkbox" ? checked : value });
   };
 
-  const handleSubmit = () => {
-    if (isEditing) {
-      setEntries((prev) =>
-        prev.map((entry, index) =>
-          index === editingId ? { ...entry, ...formData } : entry
-        )
-      );
-    } else {
-      setEntries((prev) => [...prev, formData]);
+  const handleSubmit = async () => {
+    // Ensure required fields are not empty
+    if (!formData.student_id || !formData.minerva_email || !formData.full_name) {
+      alert("Please fill in all required fields.");
+      return;
     }
-    handleCloseModal();
+  
+    try {
+      if (isEditing) {
+        // Update existing entry
+        await axios.put(`/api/ws-position-tracker/${editingId}`, formData);
+      } else {
+        // Add new entry
+        await axios.post(`/api/ws-position-tracker`, formData);
+      }
+      fetchEntries(); // Reload the entries from the database
+      handleCloseModal(); // Close the modal
+      console.log("Data saved successfully!");
+    } catch (error) {
+      console.error("Error saving data:", error.response || error);
+      alert("Failed to save data. Please try again.");
+    }
   };
+  
+  
 
-  const handleDelete = (id) => {
-    setEntries((prev) => prev.filter((_, index) => index !== id));
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`/api/ws-position-tracker/${id}`);
+      fetchEntries();
+    } catch (error) {
+      console.error("Error deleting WS Tracker entry:", error);
+    }
   };
 
   const handleImport = (data) => {
@@ -62,7 +95,7 @@ const WSPositionTracker = () => {
       notes: row[12],
       merge_status: row[13],
     }));
-    setEntries(formattedData);
+    setEntries((prev) => [...prev, ...formattedData]);
   };
 
   return (
@@ -199,7 +232,7 @@ const WSPositionTracker = () => {
                         cursor: "pointer",
                         fontSize: "18px",
                       }}
-                      onClick={() => handleShowModal(entry, index)}
+                      onClick={() => handleShowModal(entry, entry.id)}
                     />
                     <FaTrash
                       style={{
@@ -207,7 +240,7 @@ const WSPositionTracker = () => {
                         cursor: "pointer",
                         fontSize: "18px",
                       }}
-                      onClick={() => handleDelete(index)}
+                      onClick={() => handleDelete(entry.id)}
                     />
                   </div>
                 </td>

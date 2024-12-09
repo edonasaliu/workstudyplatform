@@ -3,7 +3,6 @@ from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 
-
 # Import configuration classes from config module
 from .config import DevelopmentConfig, ProductionConfig, TestingConfig
 

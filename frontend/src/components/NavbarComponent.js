@@ -54,7 +54,7 @@ const NavbarComponent = () => {
                         // Show only for admin users
                         <>
                         <Nav.Link as={NavLink} to="/admin/job-posting-dashboard">Job Postings</Nav.Link>
-                        <Nav.Link as={NavLink} to="/admin/wa-position-tracker">WA Position Tracker</Nav.Link>
+                        <Nav.Link as={NavLink} to="/admin/ws-position-tracker">WS Position Tracker</Nav.Link>
                         <Nav.Link as={NavLink} to="/admin/teams">Teams</Nav.Link>
                         </>
 

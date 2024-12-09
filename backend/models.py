@@ -226,3 +226,43 @@ class Application(db.Model):
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
+
+class WSTracker(db.Model):
+    __tablename__ = "ws_tracker"
+
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.String(50), nullable=False, unique=True)
+    minerva_email = db.Column(db.String(100), nullable=False)
+    full_name = db.Column(db.String(100), nullable=False)
+    expected_grad_year = db.Column(db.Integer, nullable=False)
+    ws_eligible = db.Column(db.Boolean, nullable=False)
+    role = db.Column(db.String(100), nullable=False)
+    manager_name = db.Column(db.String(100), nullable=False)
+    paycom_manager = db.Column(db.String(100))
+    manager_email = db.Column(db.String(100), nullable=False)
+    department_name = db.Column(db.String(100), nullable=False)
+    paycom_id = db.Column(db.String(50))
+    contractor_status = db.Column(db.String(50))
+    notes = db.Column(db.Text)
+    merge_status = db.Column(db.String(100))
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "student_id": self.student_id,
+            "minerva_email": self.minerva_email,
+            "full_name": self.full_name,
+            "expected_grad_year": self.expected_grad_year,
+            "ws_eligible": self.ws_eligible,
+            "role": self.role,
+            "manager_name": self.manager_name,
+            "paycom_manager": self.paycom_manager,
+            "manager_email": self.manager_email,
+            "department_name": self.department_name,
+            "paycom_id": self.paycom_id,
+            "contractor_status": self.contractor_status,
+            "notes": self.notes,
+            "merge_status": self.merge_status,
+        }

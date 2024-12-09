@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from .models import db, Job, Application, User
+from .models import db, Job, Application, User, WSTracker
 from flask_login import current_user, login_required
 from werkzeug.utils import secure_filename
 import os
@@ -420,4 +420,115 @@ def admin_view_all_jobs():
         jobs_data.append(job_data)
 
     return jsonify(jobs_data), 200
+
+
+
+@main.route("/api/ws-position-tracker", methods=["GET", "POST"])
+@login_required
+def manage_ws_position_tracker():
+    if request.method == "POST":
+        data = request.json
+        new_entry = WSTracker(
+            student_id=data["student_id"],
+            minerva_email=data["minerva_email"],
+            full_name=data["full_name"],
+            expected_grad_year=data["expected_grad_year"],
+            ws_eligible=data["ws_eligible"],
+            role=data["role"],
+            manager_name=data["manager_name"],
+            paycom_manager=data.get("paycom_manager"),
+            manager_email=data["manager_email"],
+            department_name=data["department_name"],
+            paycom_id=data.get("paycom_id"),
+            contractor_status=data.get("contractor_status"),
+            notes=data.get("notes"),
+            merge_status=data.get("merge_status"),
+        )
+        db.session.add(new_entry)
+        db.session.commit()
+        return jsonify(new_entry.to_dict()), 201
+
+    entries = WSTracker.query.all()
+    return jsonify([entry.to_dict() for entry in entries]), 200
+
+@main.route("/api/ws-position-tracker/<int:entry_id>", methods=["PUT"])
+@login_required
+def update_ws_position_tracker(entry_id):
+    entry = WSTracker.query.get_or_404(entry_id)
+
+    data = request.json
+    entry.student_id = data.get("student_id", entry.student_id)
+    entry.minerva_email = data.get("minerva_email", entry.minerva_email)
+    entry.full_name = data.get("full_name", entry.full_name)
+    entry.expected_grad_year = data.get("expected_grad_year", entry.expected_grad_year)
+    entry.ws_eligible = data.get("ws_eligible", entry.ws_eligible)
+    entry.role = data.get("role", entry.role)
+    entry.manager_name = data.get("manager_name", entry.manager_name)
+    entry.paycom_manager = data.get("paycom_manager", entry.paycom_manager)
+    entry.manager_email = data.get("manager_email", entry.manager_email)
+    entry.department_name = data.get("department_name", entry.department_name)
+    entry.paycom_id = data.get("paycom_id", entry.paycom_id)
+    entry.contractor_status = data.get("contractor_status", entry.contractor_status)
+    entry.notes = data.get("notes", entry.notes)
+    entry.merge_status = data.get("merge_status", entry.merge_status)
+
+    db.session.commit()
+    return jsonify(entry.to_dict()), 200
+
+@main.route("/ws-position-tracker", methods=["POST"])
+def add_ws_position_tracker_entry():
+    """
+    Add a new WS Tracker entry to the database.
+
+    Returns:
+        JSON response containing the new entry or an error message.
+    """
+    data = request.json
+    print("Received data:", data)  # Debug incoming data
+
+    try:
+        # Check for required fields in the request payload
+        required_fields = [
+            "student_id", "minerva_email", "full_name", "expected_grad_year",
+            "ws_eligible", "role", "manager_name", "manager_email",
+            "department_name"
+        ]
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"error": f"Missing required field: {field}"}), 400
+
+        # Check for duplicates (if student_id is UNIQUE)
+        existing_entry = WSTracker.query.filter_by(student_id=data["student_id"]).first()
+        if existing_entry:
+            return jsonify({"error": "Entry with this student_id already exists"}), 409
+
+        # Create a new WSTracker entry
+        new_entry = WSTracker(
+            student_id=data["student_id"],
+            minerva_email=data["minerva_email"],
+            full_name=data["full_name"],
+            expected_grad_year=data["expected_grad_year"],
+            ws_eligible=data["ws_eligible"],
+            role=data["role"],
+            manager_name=data["manager_name"],
+            paycom_manager=data.get("paycom_manager"),
+            manager_email=data["manager_email"],
+            department_name=data["department_name"],
+            paycom_id=data.get("paycom_id"),
+            contractor_status=data.get("contractor_status"),
+            notes=data.get("notes"),
+            merge_status=data.get("merge_status"),
+        )
+
+        # Add to database
+        db.session.add(new_entry)
+        db.session.commit()
+
+        return jsonify(new_entry.to_dict()), 201
+
+    except Exception as e:
+        # Rollback the session in case of an error
+        db.session.rollback()
+        print("Error while adding WS Tracker entry:", str(e))
+        return jsonify({"error": "Failed to save the entry", "details": str(e)}), 500
 

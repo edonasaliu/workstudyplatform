@@ -19,6 +19,9 @@ import EditJobPage from './views/EditJobPage';
 import AdminDashboard from './views/admin/AdminDashboard';
 import JobPostingDashboard from './views/admin/JobPostingDashboard';
 import TeamsOverview from './views/admin/TeamsOverview';
+import WSPositionTracker from './views/admin/WSPositionTracker';
+
+
 
 function App() {
   const { getCurrentUser, user } = useContext(UserContext);
@@ -45,6 +48,7 @@ function App() {
               
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/job-posting-dashboard" element={<JobPostingDashboard />} />
+              <Route path="/admin/ws-position-tracker" element={<WSPositionTracker />} />
 
               <Route path="/Dashboard" element={<CTDResourcesPage />} />
               <Route path="/employer-dashboard" element={<EmployerDashboard />} />
