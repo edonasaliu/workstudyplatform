@@ -34,7 +34,7 @@ const AdminDashboard = () => {
                             <Card.Text>View all work-study job postings and manage applications.</Card.Text>
                             <Button
                                 style={{ backgroundColor: '#f45d26', borderColor: 'transparent' }}
-                                onClick={() => navigate('/admin/job-postings')}
+                                onClick={() => navigate('/admin/job-posting-dashboard')}
                             >
                                 Go to Job Postings
                             </Button>
@@ -48,7 +48,7 @@ const AdminDashboard = () => {
                             <Card.Text>Upload and manage work-study position trackers.</Card.Text>
                             <Button
                                 style={{ backgroundColor: '#f45d26', borderColor: 'transparent' }}
-                                onClick={() => navigate('/admin/ws-tracker')}
+                                onClick={() => navigate('/admin/ws-position-tracker')}
                             >
                                 Go to Tracker
                             </Button>
