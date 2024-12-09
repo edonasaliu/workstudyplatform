@@ -1,8 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { Container, Table, Button, Modal, Form, Row, Col, InputGroup, FormControl } from "react-bootstrap";
-import { FaPen, FaTrash, FaUpload, FaFileCsv, FaPlus } from "react-icons/fa";
-import { CSVLink } from "react-csv";
+import {
+  Container,
+  Table,
+  Button,
+  Modal,
+  Form,
+  Row,
+  Col,
+  InputGroup,
+} from "react-bootstrap";
 import CSVReader from "react-csv-reader";
+import { FaTrash, FaPen, FaFileExport, FaUpload } from "react-icons/fa";
 
 const TeamsOverview = () => {
   const [teams, setTeams] = useState(() => {
@@ -23,7 +31,6 @@ const TeamsOverview = () => {
   const [editIndex, setEditIndex] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Save teams to local storage whenever they change
   useEffect(() => {
     localStorage.setItem("teams", JSON.stringify(teams));
   }, [teams]);
@@ -74,89 +81,118 @@ const TeamsOverview = () => {
     setShowEditModal(true);
   };
 
-  const handleImport = (data) => {
-    const formattedData = data.map((row) => ({
-      name: row[0],
-      manager: row[1],
-      email: row[2],
-      maxStudents: row[3],
-      contact: row[4],
-      priority: row[5],
-      recruitingFor: row[6],
-    }));
-    setTeams([...teams, ...formattedData]);
-  };
-
   const filteredTeams = teams.filter((team) =>
     Object.values(team).some((value) =>
       value.toString().toLowerCase().includes(searchQuery.toLowerCase())
     )
   );
 
+  const handleFileUpload = (data) => {
+    const importedTeams = data.map((row) => ({
+      name: row["Team Name"],
+      manager: row["Manager"],
+      email: row["Email"],
+      maxStudents: row["Max Students"],
+      contact: row["Contact"],
+      priority: row["Priority"],
+      recruitingFor: row["Recruiting For"],
+    }));
+    setTeams([...teams, ...importedTeams]);
+  };
+
+  const handleExport = () => {
+    const csvData = teams.map((team) => ({
+      "Team Name": team.name,
+      Manager: team.manager,
+      Email: team.email,
+      "Max Students": team.maxStudents,
+      Contact: team.contact,
+      Priority: team.priority,
+      "Recruiting For": team.recruitingFor,
+    }));
+
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [Object.keys(csvData[0]).join(","), ...csvData.map((row) => Object.values(row).join(","))].join("\n");
+
+    const link = document.createElement("a");
+    link.setAttribute("href", encodeURI(csvContent));
+    link.setAttribute("download", "teams.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
-    <Container fluid className="p-4" style={{ backgroundColor: "#f9f9f9" }}>
-      {/* Header Bar */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "20px",
-        }}
-      >
-        <h2 className="text-center mb-0">Teams Overview</h2>
-        <div style={{ display: "flex", gap: "10px" }}>
-          {/* Import Button */}
+    <Container fluid className="my-5" style={{ maxWidth: "95%" }}>
+      <h2 className="text-center mb-4">Teams Overview</h2>
+      <div className="d-flex align-items-center mb-4" style={{ gap: "20px" }}>
+        <InputGroup style={{ flex: 1 }}>
+          <Form.Control
+            placeholder="Search teams..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              height: "40px",
+            }}
+          />
+        </InputGroup>
+        <div className="d-flex" style={{ gap: "10px" }}>
           <CSVReader
-            onFileLoaded={handleImport}
-            parserOptions={{ header: false }}
-            inputStyle={{
-              width: "auto",
+            onFileLoaded={handleFileUpload}
+            parserOptions={{ header: true }}
+            inputId="csv-upload"
+            inputStyle={{ display: "none" }}
+          />
+          <label
+            htmlFor="csv-upload"
+            style={{
               backgroundColor: "#17a2b8",
               color: "white",
-              border: "none",
-              padding: "10px",
+              padding: "1px 20px",
+              borderRadius: "10px",
               cursor: "pointer",
-              borderRadius: "5px",
+              height: "40px",
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
             }}
-            label={
-              <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                <FaUpload /> Import CSV
-              </span>
-            }
-          />
-
-          {/* Export Button */}
-          <Button variant="success" style={{ display: "flex", alignItems: "center" }}>
-            <FaFileCsv style={{ marginRight: "5px" }} />
-            <CSVLink data={teams} filename="teams_data.csv" style={{ textDecoration: "none", color: "white" }}>
-              Export CSV
-            </CSVLink>
+          >
+            <FaUpload /> Import CSV
+          </label>
+          <Button
+            variant="info"
+            onClick={handleExport}
+            style={{
+              backgroundColor: "#17a2b8",
+              border: "none",
+              height: "40px",
+              display: "flex",
+              borderRadius: "10px",
+              alignItems: "center",
+              gap: "5px",
+            }}
+          >
+            <FaFileExport /> Export CSV
           </Button>
-
-          {/* Add Team Button */}
           <Button
             variant="primary"
             onClick={() => setShowAddModal(true)}
-            style={{ display: "flex", alignItems: "center", backgroundColor: "#f45d26", borderColor: "transparent" }}
+            style={{
+              backgroundColor: "#f45d26",
+              borderColor: "transparent",
+              height: "40px",
+              display: "flex",
+              borderRadius: "10px",
+              alignItems: "center",
+            }}
           >
-            <FaPlus style={{ marginRight: "5px" }} /> Add Team
+            Add New Team
           </Button>
         </div>
       </div>
-
-      {/* Search Bar */}
-      <InputGroup className="mb-3">
-        <FormControl
-          placeholder="Search by Team Name, Manager, or Recruiting Area..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </InputGroup>
-
-      {/* Table */}
-      <Table striped bordered hover responsive>
-        <thead style={{ backgroundColor: "#f2f2f2" }}>
+      <Table striped bordered hover responsive className="table-sm">
+        <thead className="thead-dark">
           <tr>
             <th>Team Name</th>
             <th>Manager</th>
@@ -179,33 +215,32 @@ const TeamsOverview = () => {
               <td>{team.priority}</td>
               <td>{team.recruitingFor}</td>
               <td>
-                <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-                  {/* Edit Button */}
-                  <FaPen
-                    style={{ cursor: "pointer", color: "#007bff" }}
-                    onClick={() => handleOpenEditModal(team, index)}
-                  />
-
-                  {/* Delete Button */}
-                  <FaTrash
-                    style={{ cursor: "pointer", color: "#dc3545" }}
-                    onClick={() => handleDeleteTeam(index)}
-                  />
-                </div>
+                <Button
+                  variant="light"
+                  className="me-2"
+                  onClick={() => handleOpenEditModal(team, index)}
+                >
+                  <FaPen />
+                </Button>
+                <Button
+                  variant="danger"
+                  onClick={() => handleDeleteTeam(index)}
+                >
+                  <FaTrash />
+                </Button>
               </td>
             </tr>
           ))}
         </tbody>
       </Table>
 
-      {/* Add Modal */}
+      {/* Modal for adding a new team */}
       <Modal show={showAddModal} onHide={() => setShowAddModal(false)}>
         <Modal.Header closeButton>
           <Modal.Title>Add New Team</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
-            {/* Add Form Fields */}
             <Row className="mb-3">
               <Col>
                 <Form.Group controlId="teamName">
@@ -234,34 +269,18 @@ const TeamsOverview = () => {
                 </Form.Group>
               </Col>
             </Row>
-
-            {/* Other Fields */}
           </Form>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowAddModal(false)}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleAddTeam} style={{ backgroundColor: "#f45d26", borderColor: "transparent" }}>
+          <Button
+            variant="primary"
+            onClick={handleAddTeam}
+            style={{ backgroundColor: "#f45d26", borderColor: "transparent" }}
+          >
             Add Team
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Edit Modal */}
-      <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Edit Team</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {/* Reuse Add Modal Form */}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowEditModal(false)}>
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={handleEditTeam} style={{ backgroundColor: "#f45d26", borderColor: "transparent" }}>
-            Save Changes
           </Button>
         </Modal.Footer>
       </Modal>
