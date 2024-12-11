@@ -5,12 +5,16 @@ Welcome to the Work-Study Platform repository, the all-in-one solution to stream
 ## 🎯 Description
 
 ### Problem Statement
+At Minerva University, the current decentralized system for managing work-study programs poses challenges of inefficiency, lack of transparency, and administrative burden. Students struggle to find and apply for opportunities, while managers and administrators face difficulties in managing the program.
 
-At Minerva University, the current decentralized system for managing work-study programs poses a set of challenges:
+### Key Features
+The Work-Study Platform addresses these problems by providing the following key features:
 
-- **Inefficiency**: Students navigate through various communication channels (primarily email, Telegram, and Notion) to find and apply to work-study opportunities, which is time-consuming and can lead to missed opportunities and miscommunications. 
-- **Lack of Transparency**: Limited information on work-study positions and requirements hinders informed decision-making, on part of both managers and students. Students report issues of not understanding 1) what positions exist/are open, 2) deadlines, 3) requirements for various positions, 4) managers for various positions, and 5) feeling like their talents aren't considered in the work study allocation process. Managers report frustration that they don't receive students particularly interested in a given position (unless they personally recruit such a student). 
-- **Administrative Burden**: Minerva work-study administrators grapple with aquiring/sharing relevant  information for various positions and managing student applications. In the current state, if a student is not "chosen" specifically by a manager, students are randomly assigned to open positions, as there is no system for students to indicate position preferences. 
+1. Student Dashboard: Provides students with a streamlined interface to view job postings, apply to positions, and log their work hours.
+2. Manager Dashboard: Enables managers to post job opportunities, review student applications, and monitor assigned tasks.
+3. Admin Dashboard: Allows administrators to oversee the entire work-study program, including managing work-study teams, student data, and generating detailed reports.
+4. WA Position Tracker: A centralized feature that enables administrators to upload and manage detailed data about students and their work-study roles.
+5. Login/Register Authentication: The platform provides a secure registration and login system with role-based access controls for students, managers, and administrators.
 
 ## 📹 Demo
 
