@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from .models import db, Job, Application, User, WSTracker
+from .models import db, Job, Application, User, Team, WSTracker
 from flask_login import current_user, login_required
 from werkzeug.utils import secure_filename
 import os
@@ -422,113 +422,128 @@ def admin_view_all_jobs():
     return jsonify(jobs_data), 200
 
 
-
-@main.route("/api/ws-position-tracker", methods=["GET", "POST"])
-@login_required
-def manage_ws_position_tracker():
-    if request.method == "POST":
+@main.route('/teams', methods=['GET', 'POST'])
+def manage_teams():
+    if request.method == 'POST':
         data = request.json
-        new_entry = WSTracker(
-            student_id=data["student_id"],
-            minerva_email=data["minerva_email"],
-            full_name=data["full_name"],
-            expected_grad_year=data["expected_grad_year"],
-            ws_eligible=data["ws_eligible"],
-            role=data["role"],
-            manager_name=data["manager_name"],
-            paycom_manager=data.get("paycom_manager"),
-            manager_email=data["manager_email"],
-            department_name=data["department_name"],
-            paycom_id=data.get("paycom_id"),
-            contractor_status=data.get("contractor_status"),
-            notes=data.get("notes"),
-            merge_status=data.get("merge_status"),
+        new_team = Team(
+            name=data['name'],
+            manager=data['manager'],
+            email=data['email'],
+            max_students=data['maxStudents'],
+            contact=data['contact'],
+            priority=data['priority'],
+            recruiting_for=data['recruitingFor'],
         )
-        db.session.add(new_entry)
+        db.session.add(new_team)
         db.session.commit()
-        return jsonify(new_entry.to_dict()), 201
+        return jsonify(new_team.to_dict()), 201
 
-    entries = WSTracker.query.all()
-    return jsonify([entry.to_dict() for entry in entries]), 200
+    teams = Team.query.all()
+    return jsonify([team.to_dict() for team in teams]), 200
 
-@main.route("/api/ws-position-tracker/<int:entry_id>", methods=["PUT"])
+
+@main.route('/teams/<int:team_id>', methods=['PUT', 'DELETE'])
 @login_required
-def update_ws_position_tracker(entry_id):
-    entry = WSTracker.query.get_or_404(entry_id)
+def handle_team(team_id):
+    team = Team.query.get_or_404(team_id)
 
+    if request.method == 'PUT':
+        data = request.json
+        team.name = data.get('name', team.name)
+        team.manager = data.get('manager', team.manager)
+        team.email = data.get('email', team.email)
+        team.max_students = data.get('maxStudents', team.max_students)
+        team.contact = data.get('contact', team.contact)
+        team.priority = data.get('priority', team.priority)
+        team.recruiting_for = data.get('recruitingFor', team.recruiting_for)
+        db.session.commit()
+        return jsonify(team.to_dict()), 200
+
+    elif request.method == 'DELETE':
+        db.session.delete(team)
+        db.session.commit()
+        return jsonify({"message": "Team deleted successfully"}), 200
+
+@main.route('/ws-position-tracker', methods=['GET', 'POST'])
+def manage_ws_positions():
+    if request.method == 'POST':
+        try:
+            data = request.json
+            print("Received data:", data)  # Debug incoming data
+            new_position = WSTracker(
+                student_id=data['student_id'],
+                minerva_email=data['minerva_email'],
+                full_name=data['full_name'],
+                expected_grad_year=data['expected_grad_year'],
+                ws_eligible=data['ws_eligible'],
+                role=data['role'],
+                manager_name=data['manager_name'],
+                paycom_manager=data['paycom_manager'],
+                manager_email=data['manager_email'],
+                department_name=data['department_name'],
+                paycom_id=data['paycom_id'],
+                contractor_status=data['contractor_status'],
+                notes=data['notes'],
+                merge_status=data['merge_status'],
+            )
+            db.session.add(new_position)
+            db.session.commit()
+            return jsonify(new_position.to_dict()), 201
+        except Exception as e:
+            print("Error processing POST request:", e)  # Log error
+            return jsonify({"error": str(e)}), 400
+
+    positions = WSTracker.query.all()
+    return jsonify([position.to_dict() for position in positions]), 200
+
+
+@main.route('/ws-position-tracker/<int:position_id>', methods=['PUT', 'DELETE'])
+def handle_ws_position(position_id):
+    position = WSTracker.query.get_or_404(position_id)
+
+    if request.method == 'PUT':
+        data = request.json
+        position.student_id = data.get('student_id', position.student_id)
+        position.minerva_email = data.get('minerva_email', position.minerva_email)
+        position.full_name = data.get('full_name', position.full_name)
+        position.expected_grad_year = data.get('expected_grad_year', position.expected_grad_year)
+        position.ws_eligible = data.get('ws_eligible', position.ws_eligible)
+        position.role = data.get('role', position.role)
+        position.manager_name = data.get('manager_name', position.manager_name)
+        position.paycom_manager = data.get('paycom_manager', position.paycom_manager)
+        position.manager_email = data.get('manager_email', position.manager_email)
+        position.department_name = data.get('department_name', position.department_name)
+        position.paycom_id = data.get('paycom_id', position.paycom_id)
+        position.contractor_status = data.get('contractor_status', position.contractor_status)
+        position.notes = data.get('notes', position.notes)
+        position.merge_status = data.get('merge_status', position.merge_status)
+        db.session.commit()
+        return jsonify(position.to_dict()), 200
+
+    elif request.method == 'DELETE':
+        db.session.delete(position)
+        db.session.commit()
+        return jsonify({"message": "WS Position deleted successfully"}), 200
+
+@main.route('/teams/<int:team_id>', methods=['PUT'])
+@login_required
+def update_team(team_id):
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not validate_token(auth_header.split(" ")[1]):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    team = Team.query.get_or_404(team_id)
     data = request.json
-    entry.student_id = data.get("student_id", entry.student_id)
-    entry.minerva_email = data.get("minerva_email", entry.minerva_email)
-    entry.full_name = data.get("full_name", entry.full_name)
-    entry.expected_grad_year = data.get("expected_grad_year", entry.expected_grad_year)
-    entry.ws_eligible = data.get("ws_eligible", entry.ws_eligible)
-    entry.role = data.get("role", entry.role)
-    entry.manager_name = data.get("manager_name", entry.manager_name)
-    entry.paycom_manager = data.get("paycom_manager", entry.paycom_manager)
-    entry.manager_email = data.get("manager_email", entry.manager_email)
-    entry.department_name = data.get("department_name", entry.department_name)
-    entry.paycom_id = data.get("paycom_id", entry.paycom_id)
-    entry.contractor_status = data.get("contractor_status", entry.contractor_status)
-    entry.notes = data.get("notes", entry.notes)
-    entry.merge_status = data.get("merge_status", entry.merge_status)
+
+    # Update team fields
+    team.name = data.get('name', team.name)
+    team.manager = data.get('manager', team.manager)
+    team.email = data.get('email', team.email)
+    team.max_students = data.get('maxStudents', team.max_students)
+    team.contact = data.get('contact', team.contact)
+    team.priority = data.get('priority', team.priority)
+    team.recruiting_for = data.get('recruitingFor', team.recruiting_for)
 
     db.session.commit()
-    return jsonify(entry.to_dict()), 200
-
-@main.route("/ws-position-tracker", methods=["POST"])
-def add_ws_position_tracker_entry():
-    """
-    Add a new WS Tracker entry to the database.
-
-    Returns:
-        JSON response containing the new entry or an error message.
-    """
-    data = request.json
-    print("Received data:", data)  # Debug incoming data
-
-    try:
-        # Check for required fields in the request payload
-        required_fields = [
-            "student_id", "minerva_email", "full_name", "expected_grad_year",
-            "ws_eligible", "role", "manager_name", "manager_email",
-            "department_name"
-        ]
-        for field in required_fields:
-            if field not in data:
-                return jsonify({"error": f"Missing required field: {field}"}), 400
-
-        # Check for duplicates (if student_id is UNIQUE)
-        existing_entry = WSTracker.query.filter_by(student_id=data["student_id"]).first()
-        if existing_entry:
-            return jsonify({"error": "Entry with this student_id already exists"}), 409
-
-        # Create a new WSTracker entry
-        new_entry = WSTracker(
-            student_id=data["student_id"],
-            minerva_email=data["minerva_email"],
-            full_name=data["full_name"],
-            expected_grad_year=data["expected_grad_year"],
-            ws_eligible=data["ws_eligible"],
-            role=data["role"],
-            manager_name=data["manager_name"],
-            paycom_manager=data.get("paycom_manager"),
-            manager_email=data["manager_email"],
-            department_name=data["department_name"],
-            paycom_id=data.get("paycom_id"),
-            contractor_status=data.get("contractor_status"),
-            notes=data.get("notes"),
-            merge_status=data.get("merge_status"),
-        )
-
-        # Add to database
-        db.session.add(new_entry)
-        db.session.commit()
-
-        return jsonify(new_entry.to_dict()), 201
-
-    except Exception as e:
-        # Rollback the session in case of an error
-        db.session.rollback()
-        print("Error while adding WS Tracker entry:", str(e))
-        return jsonify({"error": "Failed to save the entry", "details": str(e)}), 500
-
+    return jsonify(team.to_dict()), 200

@@ -20,11 +20,6 @@ class User(db.Model, UserMixin):
         resume (str): The resume of the user (only applicable for students).
         jobs (list): The list of jobs posted by the user (only applicable for employers).
         applications (list): The list of applications submitted by the user (only applicable for students).
-
-    Methods:
-        set_password(password): Sets the password for the user.
-        check_password(password): Checks if the provided password matches the user's password.
-        to_dict(): Converts the user object to a dictionary representation.
     """
 
     id = db.Column(db.Integer, primary_key=True)
@@ -47,7 +42,6 @@ class User(db.Model, UserMixin):
         passive_deletes=True,
     )
     
-    
     applications = db.relationship(
         "Application",
         backref=backref("student", uselist=False),
@@ -58,33 +52,12 @@ class User(db.Model, UserMixin):
     )
 
     def set_password(self, password):
-        """
-        Sets the password for the user.
-
-        Args:
-            password (str): The password to set.
-        """
         self.password = generate_password_hash(password)
 
     def check_password(self, password):
-        """
-        Checks if the provided password matches the user's password.
-
-        Args:
-            password (str): The password to check.
-
-        Returns:
-            bool: True if the password matches, False otherwise.
-        """
         return check_password_hash(self.password, password)
 
     def to_dict(self):
-        """
-        Converts the user object to a dictionary representation.
-
-        Returns:
-            dict: A dictionary representation of the user object.
-        """
         user_dict = {
             "id": self.id,
             "username": self.username,
@@ -94,17 +67,17 @@ class User(db.Model, UserMixin):
             "role": self.role,
         }
 
-        # Add student or employer specific fields
+        # Add student or employer-specific fields
         if self.role == "Student":
-            user_dict.update(
-                {
-                    "education_level": self.education_level,
-                    "resume": self.resume,
-                    "applications": [app.to_dict() for app in self.applications],
-                }
-            )
+            user_dict.update({
+                "education_level": self.education_level,
+                "resume": self.resume,
+                "applications": [app.to_dict() for app in self.applications],
+            })
         elif self.role == "Employer":
-            user_dict.update({"jobs": [job.to_dict() for job in self.jobs]})
+            user_dict.update({
+                "jobs": [job.to_dict() for job in self.jobs]
+            })
 
         return user_dict
 
@@ -112,26 +85,7 @@ class User(db.Model, UserMixin):
 class Job(db.Model):
     """
     Represents a job in the system.
-
-    Attributes:
-        id (int): The unique identifier for the job.
-        employer_id (int): The ID of the employer who posted the job.
-        title (str): The title of the job.
-        department (str): The department associated with the job.
-        manager_name (str): The name of the manager for the position.
-        manager_email (str): The email address of the manager.
-        hiring_semesters (str): Semesters during which hiring is active.
-        min_students (int): Minimum number of students required.
-        max_students (int): Maximum number of students that can be hired.
-        role_location (str): The location of the job role.
-        type_of_work (str): The type of work involved in the job.
-        prerequisites (str): Prerequisites for the job.
-        brief_description (str): A brief description of the job.
-        more_details (str): More details about the job.
-        application_deadline (str): The deadline for job applications.
-        applications (list): The list of applications associated with the job.
     """
-
     id = db.Column(db.Integer, primary_key=True)
     employer_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     title = db.Column(db.String(100), nullable=False)
@@ -147,17 +101,9 @@ class Job(db.Model):
     brief_description = db.Column(db.Text, nullable=False)
     more_details = db.Column(db.Text)
     application_deadline = db.Column(db.String(100), nullable=False)
-    applications = db.relationship('Application', backref='job', lazy=True)
-    description = db.Column(db.Text, nullable=True)
-
+    applications = db.relationship("Application", backref="job", lazy=True)
 
     def to_dict(self):
-        """
-        Converts the Job object to a dictionary.
-
-        Returns:
-            dict: A dictionary representation of the Job object.
-        """
         return {
             "id": self.id,
             "employer_id": self.employer_id,
@@ -174,44 +120,23 @@ class Job(db.Model):
             "brief_description": self.brief_description,
             "more_details": self.more_details,
             "application_deadline": self.application_deadline,
-            "description": self.description
         }
-        
-        
+
 
 class Application(db.Model):
     """
     Represents a job application made by a student.
-
-    Attributes:
-        id (int): The unique identifier for the application.
-        student_id (int): The ID of the student who made the application.
-        job_id (int): The ID of the job the application is for.
-        status (str): The status of the application (e.g., "pending", "accepted", "rejected").
-
-    Methods:
-        to_dict(): Converts the Application object to a dictionary.
-
     """
-
     id = db.Column(db.Integer, primary_key=True)
-    
-    student_id = db.Column(db.Integer, db.ForeignKey("user.id")) #needs to be modified @edona we need to connect it to the student id from the user authentication , I made it nullable for now
+    student_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     job_id = db.Column(db.Integer, db.ForeignKey("job.id"))
     status = db.Column(db.String(100), default="pending")
     email_address = db.Column(db.String(100), nullable=False)
     year_of_graduation = db.Column(db.Integer, nullable=False)
-    resume = db.Column(db.LargeBinary, nullable=True)  # Storing file data; adjust as needed
+    resume = db.Column(db.LargeBinary, nullable=True)
     candidate_statement = db.Column(db.Text, nullable=False)
 
     def to_dict(self):
-        """
-        Converts the Application object to a dictionary.
-
-        Returns:
-            dict: A dictionary representation of the Application object.
-
-        """
         return {
             "id": self.id,
             "student_id": self.student_id,
@@ -223,30 +148,51 @@ class Application(db.Model):
         }
 
 
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
+class Team(db.Model):
+    """
+    Represents a team in the system.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    manager = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), nullable=False)
+    max_students = db.Column(db.Integer, nullable=False)
+    contact = db.Column(db.String(100), nullable=True)
+    priority = db.Column(db.String(50), nullable=False)
+    recruiting_for = db.Column(db.String(100), nullable=True)
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "manager": self.manager,
+            "email": self.email,
+            "maxStudents": self.max_students,
+            "contact": self.contact,
+            "priority": self.priority,
+            "recruitingFor": self.recruiting_for,
+        }
 
 
 class WSTracker(db.Model):
-    __tablename__ = "ws_tracker"
-
+    """
+    Represents a work-study tracker in the system.
+    """
     id = db.Column(db.Integer, primary_key=True)
-    student_id = db.Column(db.String(50), nullable=False, unique=True)
+    student_id = db.Column(db.String(100), nullable=False)
     minerva_email = db.Column(db.String(100), nullable=False)
     full_name = db.Column(db.String(100), nullable=False)
     expected_grad_year = db.Column(db.Integer, nullable=False)
-    ws_eligible = db.Column(db.Boolean, nullable=False)
-    role = db.Column(db.String(100), nullable=False)
-    manager_name = db.Column(db.String(100), nullable=False)
-    paycom_manager = db.Column(db.String(100))
-    manager_email = db.Column(db.String(100), nullable=False)
-    department_name = db.Column(db.String(100), nullable=False)
-    paycom_id = db.Column(db.String(50))
-    contractor_status = db.Column(db.String(50))
-    notes = db.Column(db.Text)
-    merge_status = db.Column(db.String(100))
+    ws_eligible = db.Column(db.Boolean, nullable=False, default=False)
+    role = db.Column(db.String(100), nullable=True)
+    manager_name = db.Column(db.String(100), nullable=True)
+    paycom_manager = db.Column(db.String(100), nullable=True)
+    manager_email = db.Column(db.String(100), nullable=True)
+    department_name = db.Column(db.String(100), nullable=True)
+    paycom_id = db.Column(db.String(100), nullable=True)
+    contractor_status = db.Column(db.String(50), nullable=True)
+    notes = db.Column(db.Text, nullable=True)
+    merge_status = db.Column(db.String(50), nullable=True)
 
     def to_dict(self):
         return {
@@ -266,3 +212,8 @@ class WSTracker(db.Model):
             "notes": self.notes,
             "merge_status": self.merge_status,
         }
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))

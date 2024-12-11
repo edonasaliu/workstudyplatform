@@ -1,5 +1,5 @@
 # Virtual environments
-.venv/
+.venv
 env/
 venv/
 node_modules/

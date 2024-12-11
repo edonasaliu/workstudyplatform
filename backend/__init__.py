@@ -21,7 +21,8 @@ def create_app(config_name=None):
         Flask: The configured Flask application.
     """
     app = Flask(__name__)
-    CORS(app, supports_credentials=True)
+    CORS(app, origins=["http://localhost:3000"], supports_credentials=True)
+
 
     # Set configuration based on the provided argument
     if config_name == 'development':
