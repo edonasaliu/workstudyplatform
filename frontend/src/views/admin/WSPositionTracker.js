@@ -1,52 +1,133 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Form, Modal, InputGroup } from "react-bootstrap";
-import { CSVLink } from "react-csv"; // For CSV Export
-import CSVReader from "react-csv-reader"; // For CSV Import
-import { FaPen, FaTrash, FaPlus, FaFileExport, FaUpload } from "react-icons/fa"; // Icons
-import axios from "axios"; // For API calls
+import { Table, Button, Form, Modal, InputGroup, Card, Container, Row, Col, Badge } from "react-bootstrap";
+import { CSVLink } from "react-csv";
+import CSVReader from "react-csv-reader";
+import { FaPen, FaTrash, FaPlus, FaFileExport, FaUpload, FaSearch, FaFilter } from "react-icons/fa";
 
-const BASE_URL = "http://localhost:8080"; // Adjust the port if necessary
+const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8080";
 
+// Custom styles
+const styles = {
+  container: {
+    backgroundColor: "#f8f9fa",
+    minHeight: "100vh",
+    padding: "2rem",
+  },
+  header: {
+    backgroundColor: "white",
+    borderRadius: "10px",
+    padding: "1.5rem",
+    marginBottom: "2rem",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.08)",
+  },
+  headerTitle: {
+    color: "#2c3e50",
+    fontSize: "2rem",
+    fontWeight: "600",
+    marginBottom: "0",
+  },
+  statsCard: {
+    borderRadius: "8px",
+    border: "none",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.08)",
+    marginBottom: "1.5rem",
+    transition: "transform 0.2s",
+    cursor: "default",
+    "&:hover": {
+      transform: "translateY(-2px)",
+    },
+  },
+  actionButton: {
+    borderRadius: "6px",
+    padding: "0.5rem 1rem",
+    display: "flex",
+    alignItems: "center",
+    gap: "0.5rem",
+    transition: "all 0.2s",
+  },
+  table: {
+    backgroundColor: "white",
+    borderRadius: "10px",
+    overflow: "hidden",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.08)",
+  },
+  tableHeader: {
+    backgroundColor: "#f8f9fa",
+    color: "#2c3e50",
+    fontWeight: "600",
+  },
+  searchBar: {
+    position: "relative",
+    marginBottom: "1.5rem",
+  },
+  searchIcon: {
+    position: "absolute",
+    left: "1rem",
+    top: "50%",
+    transform: "translateY(-50%)",
+    color: "#6c757d",
+  },
+  modal: {
+    borderRadius: "10px",
+  },
+  modalHeader: {
+    backgroundColor: "#f8f9fa",
+    borderBottom: "1px solid #dee2e6",
+    padding: "1.5rem",
+  },
+};
 
 const WSPositionTracker = () => {
+  // State declarations
   const [entries, setEntries] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({});
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [stats, setStats] = useState({
+    totalEntries: 0,
+    activeStudents: 0,
+    departments: 0,
+  });
 
-  const fetchEntries = async () => {
-    try {
-      const response = await fetch(`${BASE_URL}/ws-position-tracker`);
-      if (response.ok) {
-        const data = await response.json();
-        setEntries(data);
-      } else {
-        console.error("Failed to fetch WS Tracker entries:", response.statusText);
-      }
-    } catch (error) {
-      console.error("Error fetching WS Tracker entries:", error);
-    }
-  };
-  
-
+  // Fetch entries on component mount
   useEffect(() => {
-    const fetchPositions = async () => {
+    const fetchEntries = async () => {
+      setLoading(true);
       try {
         const response = await fetch(`${BASE_URL}/ws-position-tracker`);
-        console.log("Fetching from:", `${BASE_URL}/ws-position-tracker`);
-        const data = await response.json();
-        setEntries(data);
+        if (response.ok) {
+          const data = await response.json();
+          setEntries(data);
+        } else {
+          console.error("Failed to fetch entries:", response.statusText);
+        }
       } catch (error) {
-        console.error("Error fetching positions:", error);
+        console.error("Error fetching entries:", error);
+      } finally {
+        setLoading(false);
       }
     };
-    
-  
-    fetchPositions();
+
+    fetchEntries();
   }, []);
 
+  // Update stats when entries change
+  useEffect(() => {
+    if (entries.length > 0) {
+      const departments = new Set(entries.map(entry => entry.department_name)).size;
+      const activeStudents = entries.filter(entry => entry.ws_eligible).length;
+      setStats({
+        totalEntries: entries.length,
+        activeStudents,
+        departments,
+      });
+    }
+  }, [entries]);
+
+  // Handler functions
   const handleShowModal = (entry = {}, id = null) => {
     setFormData(entry);
     setIsEditing(Boolean(id));
@@ -57,108 +138,117 @@ const WSPositionTracker = () => {
   const handleCloseModal = () => {
     setFormData({});
     setShowModal(false);
+    setIsEditing(false);
+    setEditingId(null);
   };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({ ...formData, [name]: type === "checkbox" ? checked : value });
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value
+    }));
   };
+
   const handleSubmit = async () => {
-    const method = isEditing ? "PUT" : "POST";
-    const url = isEditing
-      ? `${BASE_URL}/ws-position-tracker/${editingId}`
-      : `${BASE_URL}/ws-position-tracker`;
+    setLoading(true);
     try {
-      console.log("Sending data:", formData); // Log the formData being sent
+      const method = isEditing ? "PUT" : "POST";
+      const url = isEditing
+        ? `${BASE_URL}/ws-position-tracker/${editingId}`
+        : `${BASE_URL}/ws-position-tracker`;
+
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-  
+
       if (!response.ok) {
         throw new Error(`API responded with status: ${response.status}`);
       }
-  
+
       const data = await response.json();
-      console.log("Response data:", data); // Log the backend response
-      setEntries((prev) =>
+      
+      setEntries(prev =>
         isEditing
-          ? prev.map((e) => (e.id === editingId ? data : e))
+          ? prev.map(e => (e.id === editingId ? data : e))
           : [...prev, data]
       );
-      setShowModal(false);
-      setFormData({});
+      
+      handleCloseModal();
     } catch (error) {
-      console.error("Error saving position:", error);
+      console.error("Error saving entry:", error);
+      alert("Failed to save entry. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
-  
-  
 
   const handleDelete = async (id) => {
-    try {
-      const response = await fetch(`${BASE_URL}/ws-position-tracker/${id}`, {
-        method: "DELETE",
-      });
-  
-      if (!response.ok) {
-        throw new Error("Failed to delete WS Tracker entry");
+    if (window.confirm("Are you sure you want to delete this entry?")) {
+      setLoading(true);
+      try {
+        const response = await fetch(`${BASE_URL}/ws-position-tracker/${id}`, {
+          method: "DELETE",
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to delete entry");
+        }
+
+        setEntries(prev => prev.filter(entry => entry.id !== id));
+      } catch (error) {
+        console.error("Error deleting entry:", error);
+        alert("Failed to delete entry. Please try again.");
+      } finally {
+        setLoading(false);
       }
-  
-      setEntries((prev) => prev.filter((entry) => entry.id !== id));
-    } catch (error) {
-      console.error("Error deleting WS Tracker entry:", error);
     }
   };
-  
 
-const handleImport = async (data) => {
-  // Ensure the data matches the required structure
-  const formattedData = data.map((row) => ({
-    student_id: row[0] || "",
-    minerva_email: row[1] || "",
-    full_name: row[2] || "",
-    expected_grad_year: row[3] || "",
-    ws_eligible: row[4] === "Yes",
-    role: row[5] || "",
-    manager_name: row[6] || "",
-    paycom_manager: row[7] || "",
-    manager_email: row[8] || "",
-    department_name: row[9] || "",
-    paycom_id: row[10] || "",
-    contractor_status: row[11] || "",
-    notes: row[12] || "",
-    merge_status: row[13] || "",
-  }));
+  const handleImport = async (data) => {
+    setLoading(true);
+    const formattedData = data.map((row) => ({
+      student_id: row[0] || "",
+      minerva_email: row[1] || "",
+      full_name: row[2] || "",
+      expected_grad_year: row[3] || "",
+      ws_eligible: row[4] === "Yes",
+      role: row[5] || "",
+      manager_name: row[6] || "",
+      paycom_manager: row[7] || "",
+      manager_email: row[8] || "",
+      department_name: row[9] || "",
+      paycom_id: row[10] || "",
+      contractor_status: row[11] || "",
+      notes: row[12] || "",
+      merge_status: row[13] || "",
+    }));
 
-  try {
-    // Save each entry to the backend
-    for (const entry of formattedData) {
-      const response = await fetch(`${BASE_URL}/ws-position-tracker`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(entry),
-      });
+    try {
+      for (const entry of formattedData) {
+        const response = await fetch(`${BASE_URL}/ws-position-tracker`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(entry),
+        });
 
-      if (!response.ok) {
-        console.error(`Failed to save entry:`, entry, await response.text());
-        continue;
+        if (response.ok) {
+          const savedEntry = await response.json();
+          setEntries(prev => [...prev, savedEntry]);
+        }
       }
-
-      const savedEntry = await response.json();
-      // Update frontend state after saving each entry
-      setEntries((prev) => [...prev, savedEntry]);
+      alert("Data imported successfully!");
+    } catch (error) {
+      console.error("Error importing data:", error);
+      alert("Failed to import data. Please try again.");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    alert("Data imported successfully!");
-  } catch (error) {
-    console.error("Error importing data:", error);
-    alert("Failed to import data. Please try again.");
-  }
-};
-
-
+  // Filter entries based on search query
   const filteredEntries = entries.filter((entry) =>
     Object.values(entry)
       .join(" ")
@@ -167,160 +257,191 @@ const handleImport = async (data) => {
   );
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#f9f9f9" }}>
-      <div style={{ padding: "20px" }}>
-        <h1 style={{ textAlign: "center", color: "#333", marginBottom: "20px" }}>
-          WS Position Tracker
-        </h1>
-        <div className="d-flex align-items-center mb-4 justify-content-between">
-          <InputGroup style={{ flex: 1, marginRight: "20px" }}>
-            <Form.Control
-              placeholder="Search entries..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ height: "40px" }}
-            />
-          </InputGroup>
-          <div className="d-flex">
-            <CSVReader
-              onFileLoaded={handleImport}
-              parserOptions={{ header: false }}
-              inputId="csv-upload"
-              inputStyle={{ display: "none" }}
-            />
-            <label
-              htmlFor="csv-upload"
-              style={{
-                backgroundColor: "#17a2b8",
-                color: "white",
-                padding: "10px 20px",
-                borderRadius: "5px",
-                cursor: "pointer",
-                marginRight: "10px",
-                height: "40px",
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-              }}
-            >
-              <FaUpload /> Import CSV
-            </label>
-            <Button
-              style={{
-                backgroundColor: "#17a2b8",
-                color: "white",
-                padding: "10px 20px",
-                borderRadius: "5px",
-                cursor: "pointer",
-                marginRight: "10px",
-                height: "40px",
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                border: "none",
-              }}
-            >
-              <FaFileExport />
-              <CSVLink
-                data={entries}
-                filename="ws_tracker.csv"
-                style={{ textDecoration: "none", color: "white" }}
+    <div style={styles.container}>
+      {/* Header Section */}
+      <Card style={styles.header}>
+        <Card.Body style={{ textAlign: 'center' }}>
+          <h1 style={styles.headerTitle}>Work Study Position Tracker</h1>
+          <p className="text-muted mb-0">Manage and track work study positions across departments</p>
+        </Card.Body>
+      </Card>
+
+      {/* Stats Cards */}
+      <Row className="mb-4">
+        <Col md={4}>
+          <Card style={styles.statsCard}>
+            <Card.Body>
+              <h6 className="text-muted mb-2">Total Entries</h6>
+              <h2>{stats.totalEntries}</h2>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={4}>
+          <Card style={styles.statsCard}>
+            <Card.Body>
+              <h6 className="text-muted mb-2">Active Students</h6>
+              <h2>{stats.activeStudents}</h2>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={4}>
+          <Card style={styles.statsCard}>
+            <Card.Body>
+              <h6 className="text-muted mb-2">Departments</h6>
+              <h2>{stats.departments}</h2>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Search and Actions Section */}
+      <Card className="mb-4">
+        <Card.Body>
+          <Row className="align-items-center">
+            <Col md={6}>
+              <div style={styles.searchBar}>
+                <FaSearch style={styles.searchIcon} />
+                <Form.Control
+                  type="text"
+                  placeholder="Search entries..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{ paddingLeft: "2.5rem", height: "45px", borderRadius: "8px" }}
+                />
+              </div>
+            </Col>
+            <Col md={6} className="d-flex justify-content-end gap-2">
+              {/* Import CSV Button */}
+              <CSVReader
+                onFileLoaded={handleImport}
+                parserOptions={{ header: false }}
+                inputId="csv-upload"
+                inputStyle={{ display: "none" }}
+              />
+              <label
+                htmlFor="csv-upload"
+                style={{
+                  ...styles.actionButton,
+                  backgroundColor: "#6366f1",
+                  color: "white",
+                  margin: 0,
+                }}
+                className="btn"
               >
-                Export CSV
-              </CSVLink>
-            </Button>
+                <FaUpload /> Import
+              </label>
 
-            <Button
-              variant="primary"
-              onClick={() => handleShowModal()}
-              style={{
-                backgroundColor: "#f45d26",
-                borderColor: "transparent",
-                height: "40px",
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              <FaPlus /> Add New Entry
-            </Button>
-          </div>
-        </div>
-        <Table
-          striped
-          bordered
-          hover
-          style={{
-            backgroundColor: "white",
-            border: "1px solid #ddd",
-            boxShadow: "0px 1px 3px rgba(0, 0, 0, 0.1)",
-          }}
-        >
-          <thead style={{ backgroundColor: "#f2f2f2", color: "#333" }}>
-            <tr>
-              <th>Student ID</th>
-              <th>Minerva Email</th>
-              <th>Full Name</th>
-              <th>Expected Grad Year</th>
-              <th>WS Eligible</th>
-              <th>Role</th>
-              <th>Manager Name</th>
-              <th>Paycom Manager</th>
-              <th>Manager Email</th>
-              <th>Department Name</th>
-              <th>Paycom ID</th>
-              <th>Contractor Status</th>
-              <th>Notes</th>
-              <th>Merge Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredEntries.map((entry, index) => (
-              <tr key={index}>
-                <td>{entry.student_id}</td>
-                <td>{entry.minerva_email}</td>
-                <td>{entry.full_name}</td>
-                <td>{entry.expected_grad_year}</td>
-                <td>{entry.ws_eligible ? "Yes" : "No"}</td>
-                <td>{entry.role}</td>
-                <td>{entry.manager_name}</td>
-                <td>{entry.paycom_manager}</td>
-                <td>{entry.manager_email}</td>
-                <td>{entry.department_name}</td>
-                <td>{entry.paycom_id}</td>
-                <td>{entry.contractor_status}</td>
-                <td>{entry.notes}</td>
-                <td>{entry.merge_status}</td>
-                <td>
-                  <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-                    <FaPen
-                      style={{
-                        color: "#007bff",
-                        cursor: "pointer",
-                        fontSize: "18px",
-                      }}
-                      onClick={() => handleShowModal(entry, entry.id)}
-                    />
-                    <FaTrash
-                      style={{
-                        color: "#dc3545",
-                        cursor: "pointer",
-                        fontSize: "18px",
-                      }}
-                      onClick={() => handleDelete(entry.id)}
-                    />
-                  </div>
-                </td>
+              {/* Export CSV Button */}
+              <Button
+                style={{
+                  ...styles.actionButton,
+                  backgroundColor: "#22c55e",
+                  borderColor: "transparent",
+                }}
+              >
+                <FaFileExport />
+                <CSVLink
+                  data={entries}
+                  filename="ws_tracker.csv"
+                  style={{ color: "white", textDecoration: "none" }}
+                >
+                  Export
+                </CSVLink>
+              </Button>
+
+              {/* Add New Entry Button */}
+              <Button
+                variant="primary"
+                onClick={() => handleShowModal()}
+                style={{
+                  ...styles.actionButton,
+                  backgroundColor: "#f45d26",
+                  borderColor: "transparent",
+                }}
+              >
+                <FaPlus /> Add Entry
+              </Button>
+            </Col>
+          </Row>
+        </Card.Body>
+      </Card>
+
+      {/* Data Table */}
+      <Card style={styles.table}>
+        <Card.Body className="p-0">
+          <Table responsive hover className="mb-0">
+            <thead style={styles.tableHeader}>
+              <tr>
+                <th>Student ID</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Grad Year</th>
+                <th>Status</th>
+                <th>Role</th>
+                <th>Manager</th>
+                <th>Department</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </Table>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan="9" className="text-center py-4">Loading...</td>
+                </tr>
+              ) : filteredEntries.length === 0 ? (
+                <tr>
+                  <td colSpan="9" className="text-center py-4">No entries found</td>
+                </tr>
+              ) : (
+                filteredEntries.map((entry, index) => (
+                  <tr key={index} className="align-middle">
+                    <td>{entry.student_id}</td>
+                    <td>{entry.full_name}</td>
+                    <td>{entry.minerva_email}</td>
+                    <td>{entry.expected_grad_year}</td>
+                    <td>
+                      <Badge bg={entry.ws_eligible ? "success" : "secondary"}>
+                        {entry.ws_eligible ? "Eligible" : "Not Eligible"}
+                      </Badge>
+                    </td>
+                    <td>{entry.role}</td>
+                    <td>{entry.manager_name}</td>
+                    <td>{entry.department_name}</td>
+                    <td>
+                      <div className="d-flex gap-2">
+                        <Button
+                          variant="light"
+                          size="sm"
+                          onClick={() => handleShowModal(entry, entry.id)}
+                          disabled={loading}
+                        >
+                          <FaPen className="text-primary" />
+                        </Button>
+                        <Button
+                          variant="light"
+                          size="sm"
+                          onClick={() => handleDelete(entry.id)}
+                          disabled={loading}
+                        >
+                          <FaTrash className="text-danger" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </Table>
+        </Card.Body>
+      </Card>
 
-        <Modal show={showModal} onHide={handleCloseModal}>
-          <Modal.Header closeButton>
-            <Modal.Title>{isEditing ? "Edit Entry" : "Add New Entry"}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
+      {/* Add/Edit Modal */}
+      <Modal show={showModal} onHide={handleCloseModal} size="lg" centered>
+        <Modal.Header closeButton style={styles.modalHeader}>
+          <Modal.Title>{isEditing ? "Edit Entry" : "Add New Entry"}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="p-4">
+          <Row>
             {[
               "student_id",
               "minerva_email",
@@ -337,41 +458,59 @@ const handleImport = async (data) => {
               "notes",
               "merge_status",
             ].map((field) => (
-              <Form.Group controlId={field} key={field} className="mb-3">
-                <Form.Label>{field.replace(/_/g, " ")}</Form.Label>
-                {field === "ws_eligible" ? (
-                  <Form.Check
-                    type="checkbox"
-                    name={field}
-                    checked={!!formData[field]}
-                    onChange={handleChange}
-                  />
-                ) : (
-                  <Form.Control
-                    type="text"
-                    name={field}
-                    value={formData[field] || ""}
-                    onChange={handleChange}
-                  />
-                )}
-              </Form.Group>
+              <Col md={field === "notes" ? 12 : 6} key={field}>
+                <Form.Group className="mb-3">
+                <Form.Label className="text-capitalize">
+                    {field.replace(/_/g, " ")}
+                  </Form.Label>
+                  {field === "ws_eligible" ? (
+                    <Form.Check
+                      type="switch"
+                      name={field}
+                      checked={!!formData[field]}
+                      onChange={handleChange}
+                      label={formData[field] ? "Eligible" : "Not Eligible"}
+                    />
+                  ) : field === "notes" ? (
+                    <Form.Control
+                      as="textarea"
+                      rows={3}
+                      name={field}
+                      value={formData[field] || ""}
+                      onChange={handleChange}
+                    />
+                  ) : (
+                    <Form.Control
+                      type="text"
+                      name={field}
+                      value={formData[field] || ""}
+                      onChange={handleChange}
+                      placeholder={`Enter ${field.replace(/_/g, " ")}`}
+                    />
+                  )}
+                </Form.Group>
+              </Col>
             ))}
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={handleCloseModal}>
-              Cancel
-            </Button>
-            <Button 
-              variant="primary" 
-              onClick={handleSubmit} 
-              style={{ backgroundColor: "#f45d26", borderColor: "#f45d26" }}
-            >
-              {isEditing ? "Save Changes" : "Add Entry"}
-            </Button>
-
-          </Modal.Footer>
-        </Modal>
-      </div>
+          </Row>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button 
+            variant="secondary" 
+            onClick={handleCloseModal}
+            disabled={loading}
+          >
+            Cancel
+          </Button>
+          <Button 
+            variant="primary" 
+            onClick={handleSubmit} 
+            style={{ backgroundColor: "#f45d26", borderColor: "#f45d26" }}
+            disabled={loading}
+          >
+            {loading ? "Saving..." : isEditing ? "Save Changes" : "Add Entry"}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };
