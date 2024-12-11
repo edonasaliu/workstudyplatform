@@ -14,17 +14,23 @@ const styles = {
     padding: "2rem",
   },
   header: {
-    backgroundColor: "white",
+    backgroundColor: "#f8f2f0", 
     borderRadius: "10px",
-    padding: "1.5rem",
+    padding: "2rem",
     marginBottom: "2rem",
     boxShadow: "0 2px 4px rgba(0,0,0,0.08)",
+    textAlign: "center", 
   },
   headerTitle: {
     color: "#2c3e50",
-    fontSize: "2rem",
+    fontSize: "2.5rem",
     fontWeight: "600",
-    marginBottom: "0",
+    marginBottom: "0.5rem", 
+  },
+  headerSubtitle: {
+    color: "#666",
+    fontSize: "1.1rem",
+    margin: 0,
   },
   statsCard: {
     borderRadius: "8px",
