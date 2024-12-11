@@ -12,28 +12,22 @@ At Minerva University, the current decentralized system for managing work-study 
 - **Lack of Transparency**: Limited information on work-study positions and requirements hinders informed decision-making, on part of both managers and students. Students report issues of not understanding 1) what positions exist/are open, 2) deadlines, 3) requirements for various positions, 4) managers for various positions, and 5) feeling like their talents aren't considered in the work study allocation process. Managers report frustration that they don't receive students particularly interested in a given position (unless they personally recruit such a student). 
 - **Administrative Burden**: Minerva work-study administrators grapple with aquiring/sharing relevant  information for various positions and managing student applications. In the current state, if a student is not "chosen" specifically by a manager, students are randomly assigned to open positions, as there is no system for students to indicate position preferences. 
 
-## 👥 Group Demo
+## 📹 Demo
+
 ```
-https://player.vimeo.com/video/895162778?badge=0&autopause=0&player_id=0&app_id=58479
-
-or
-
-https://drive.google.com/file/d/1csv6UDoKSwBuZ4YzQcVKbId0PVrblbrs/view?usp=sharing
+[Insert demo video link here]
 ```
 
 ## 📝 Product Spec
 
-    ```
-    https://bloom-mandrill-704.notion.site/Work-Study-Platform-Product-Spec-b78131d0d64d4e1f8a1ddadfa72f22bc
-
-    ```
-    
-##  Designs
 ```
-    https://www.figma.com/file/cWsl7d673trOaDM1MZWd8C/Final-Designs-for-Work-study-platforms?type=design&node-id=0%3A1&mode=design&t=Ms3hNBhmosKu59bb-1
+https://bloom-mandrill-704.notion.site/Work-Study-Platform-Product-Spec-b78131d0d64d4e1f8a1ddadfa72f22bc
 ```
 
-
+## Designs
+```
+https://www.figma.com/file/cWsl7d673trOaDM1MZWd8C/Final-Designs-for-Work-study-platforms?type=design&node-id=0%3A1&mode=design&t=Ms3hNBhmosKu59bb-1
+```
 
 ## 🚀 Getting Started
 
@@ -49,8 +43,8 @@ Ensure you have the following installed:
 
 1. **Clone the Backend Repository**
     ```bash
-    git clone https://github.com/minerva-university/WorkStudyPlatform.git
-    cd WorkStudyPlatform
+    git clone https://github.com/edonasaliu/workstudyplatform-private.git
+    cd workstudyplatform-private
     ```
 
 2. **Create and Activate the Virtual Environment**
@@ -103,8 +97,4 @@ Ensure you have the following installed:
 
 ## 🤝 Contributing to WorkStudyPlatform
 
-Visit the [CONTRIBUTING.md](https://github.com/minerva-university/WorkStudyPlatform/blob/main/CONTRIBUTING.md
-) file and Join us in enhancing Minerva University's work-study program, making it more efficient and accessible for all students!
-
----
-
+Visit the [CONTRIBUTING.md](https://github.com/edonasaliu/workstudyplatform-private/blob/main/CONTRIBUTING.md) file and Join us in enhancing Minerva University's work-study program, making it more efficient and accessible for all students!
