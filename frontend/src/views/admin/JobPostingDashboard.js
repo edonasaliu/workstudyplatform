@@ -87,6 +87,38 @@ const JobPostingDashboard = () => {
     )
   );
 
+  const [loading, setLoading] = useState(true);
+
+  // Fetch all jobs posted by managers
+    useEffect(() => {
+      const fetchJobs = async () => {
+        setLoading(true);
+        try {
+          const response = await fetch('http://localhost:8080/admin/jobs', {
+            method: 'GET',
+            credentials: 'include',
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setJobs(data);
+            // Update stats based on fetched data
+            setStats({
+              totalJobs: data.length,
+              totalApplications: data.reduce((sum, job) => sum + (job.applications?.length || 0), 0),
+              activePositions: data.filter(job => new Date(job.application_deadline) > new Date()).length
+            });
+          } else {
+            console.error('Failed to fetch jobs');
+          }
+        } catch (error) {
+          console.error('Error fetching jobs:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchJobs();
+    }, []);
   return (
     <div style={styles.container}>
       {/* Header Section */}
