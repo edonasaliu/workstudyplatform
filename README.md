@@ -19,7 +19,7 @@ The Work-Study Platform addresses these problems by providing the following key 
 ## 📹 Demo
 
 ```
-[Insert demo video link here]
+https://drive.google.com/file/d/1gm2E15OBBtmdrJEewnDpHAOJY0annv9w/view?usp=sharing 
 ```
 
 ## 📝 Product Spec
