@@ -58,6 +58,7 @@ const styles = {
   },
 };
 
+// Job Posting Dashboard component
 const JobPostingDashboard = () => {
   const [jobs, setJobs] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
@@ -76,11 +77,13 @@ const JobPostingDashboard = () => {
     setShowApplicationsModal(true);
   };
 
+  // Close modal and reset selected job
   const handleCloseModal = () => {
     setShowApplicationsModal(false);
     setSelectedJob(null);
   };
 
+  // Filter jobs based on search query
   const filteredJobs = jobs.filter(job =>
     Object.values(job).some(value =>
       value.toString().toLowerCase().includes(searchQuery.toLowerCase())

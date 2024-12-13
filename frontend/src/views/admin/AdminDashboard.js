@@ -9,6 +9,7 @@ import {
   FaChartLine
 } from 'react-icons/fa';
 
+// Custom styles consistent with other dashboards
 const styles = {
   container: {
     backgroundColor: "#f8f9fa",
@@ -77,6 +78,7 @@ const styles = {
   },
 };
 
+// Admin Dashboard component
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [stats] = useState({
@@ -85,7 +87,8 @@ const AdminDashboard = () => {
     totalApplications: 156,
     placedStudents: 89,
   });
-
+  
+  // Menu items for the dashboard
   const menuItems = [
     {
       title: "Teams Overview",
@@ -109,7 +112,7 @@ const AdminDashboard = () => {
       bgColor: "#f6f8ff",
     },
   ];
-
+  // Render the dashboard
   return (
     <div style={styles.container}>
       {/* Header Section */}
